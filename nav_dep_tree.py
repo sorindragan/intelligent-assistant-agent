@@ -41,13 +41,16 @@ def create_delimiters(markers_list):
         delimiters += delimiter + '|'
     return delimiters[:-1]
 
-# TODO: implement this
-def search_conjuncts():
-    return None
+def search_conjuncts(start_term, sentence_dict):
+    start_term = sentence_dict[start_term]
+    conjuncts = [start_term['text']]
+    for child in start_term['children']:
+        if sentence_dict[child]['dep'] == 'conj':
+            conjuncts.append(sentence_dict[child]['text'])
+    return conjuncts
 
 def find_object(agent, sentence_dict):
     agent = sentence_dict[agent]
-    # print(agent["text"], agent["dep"], agent["children"])
     if "obj" in agent["dep"]:
         return agent["text"]
     elif agent["children"]:
@@ -55,20 +58,21 @@ def find_object(agent, sentence_dict):
             return find_object(child, sentence_dict)
 
 def extract_triplet(sentence_dict):
-    subject = []
-    predicate = []
-    object = []
+    subject_list = []
+    predicate_list = []
+    object_list = []
     root = [sentence_dict[item]["text"] for item in sentence_dict
             if sentence_dict[item]["dep"] == "ROOT"
             ][0]
+
     # passive
     if "nsubjpass" in [sentence_dict[item]["dep"] for item in sentence_dict]:
         agents = [sentence_dict[item]["text"] for item in sentence_dict
                   if sentence_dict[item]["dep"] == "agent"
                  ]
-        subject.append(find_object(agents[0], sentence_dict))
-        predicate.append(root)
-        object.append([sentence_dict[item]["text"] for item in sentence_dict
+        subject_list.append(find_object(agents[0], sentence_dict))
+        predicate_list.append(root)
+        object_list.append([sentence_dict[item]["text"] for item in sentence_dict
                        if sentence_dict[item]["dep"] == "nsubjpass"
                        ][0])
     # normal
@@ -76,6 +80,7 @@ def extract_triplet(sentence_dict):
         nsubject = [sentence_dict[item]["text"] for item in sentence_dict
                     if sentence_dict[item]["dep"] == "nsubj"
                     ][0]
+        nsubjects = search_conjuncts(nsubject, sentence_dict)
         dobjects = [sentence_dict[item]["text"] for item in sentence_dict
                     if sentence_dict[item]["dep"] == "dobj"
                     ]
@@ -84,38 +89,40 @@ def extract_triplet(sentence_dict):
                     ]
         if dobjects:
             for dobj in dobjects:
-                subject.append(nsubject)
-                predicate.append(root)
-                object.append(dobj)
+                subject_list.append(nsubject)
+                predicate_list.append(root)
+                object_list.append(dobj)
         elif pobjects:
             for pobj in pobjects:
-                subject.append(nsubject)
-                predicate.append(root)
-                object.append(pobj)
+                subject_list.append(nsubject)
+                predicate_list.append(root)
+                object_list.append(pobj)
         else:
-            subject.append(nsubject)
-            predicate.append(root)
-            object.append([sentence_dict[item]["text"] for item in sentence_dict
-                           if sentence_dict[item]["dep"] == "xcomp"
-                           ][0])
+            subject_list.append(nsubject)
+            predicate_list.append(root)
+            object_list.append([sentence_dict[item]["text"] for item in sentence_dict
+                                if (sentence_dict[item]["dep"] == "ccomp"
+                                    or sentence_dict[item]["dep"] == "xcomp")
+                                ][0])
 
-    return [(s, p, o) for (s, p, o) in zip(subject, predicate, object)]
+    return [(s, p, o) for (s, p, o) in zip(subject_list, predicate_list, object_list)]
 
 doc_examples = ['Man acts as though he were the shaper and master of language while, in fact, \
                 language remains the master of man.', 'Bob wants that house, but Eve wants the other. \
                 Linda likes both houses.', 'The old beggar ran after the rich man who was wearing \
                 a black coat', 'The flat tire and the bearing was not replaced by driver',
-                'Take two of these and call me in the morning.',
+                'Take two of these and call me in the morning.', "I love Maya and hate Sonya.",
                 ]
 
 def main():
     # phrase = input("Write text:\n")
     # doc = nlp(phrase)
 
-    phrase = 'Maia loves Matt, Tim, and John while Jimmy and little Bob really like their gay firends Sheldon and Chelsea'
+    # phrase = 'Maia loves Matt, Tim, and John while Jimmy and little Bob really like their gay firends Sheldon and Chelsea'
+    phrase = "I hate Sonya and love Maya while you and Tim want banana icecream and some juice."
     doc = nlp(phrase)
 
-    # displacy.serve(doc, style='dep', page=True)
+    displacy.serve(doc, style='dep', page=True)
 
 
     triplets = []
