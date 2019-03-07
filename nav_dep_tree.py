@@ -51,7 +51,7 @@ def find_object_passive_voice(agent, sentence_dict):
         return agent["text"]
     elif agent["children"]:
         for child in agent["children"]:
-            return find_object(child, sentence_dict)
+            return find_object_passive_voice(child, sentence_dict)
 
 
 def find_all_conjuncts(sentence_dict, conjuncts_list):
@@ -62,6 +62,7 @@ def find_all_conjuncts(sentence_dict, conjuncts_list):
                 conjuncts_list.append(sentence_dict[child]["text"])
                 find_all_conjuncts(sentence_dict, conjuncts_list)
 
+# TODO: handle negation
 
 def verify_compound(term, sentence_dict):
     term = sentence_dict[term]
@@ -84,11 +85,20 @@ def extract_triplet(sentence_dict):
         agents = [sentence_dict[item]["text"] for item in sentence_dict
                   if sentence_dict[item]["dep"] == "agent"
                   ]
-        pass_subject = verify_compound(find_object_passive_voice(agents[0], sentence_dict), sentence_dict)
-        pass_object = verify_compound([sentence_dict[item]["text"] for item in sentence_dict
-                                       if sentence_dict[item]["dep"] == "nsubjpass"
-                                       ][0], sentence_dict)
-        triplets.append((pass_subject, root["text"], pass_object))
+        pass_subject = find_object_passive_voice(agents[0], sentence_dict)
+        pass_subject_conjuncts = [pass_subject]
+        find_all_conjuncts(sentence_dict, pass_subject_conjuncts)
+        pass_object = [sentence_dict[item]["text"] for item in sentence_dict
+                       if sentence_dict[item]["dep"] == "nsubjpass"
+                       ][0]
+        pass_object_conjuncts = [pass_object]
+        find_all_conjuncts(sentence_dict, pass_object_conjuncts)
+
+        for pass_subj, pass_obj \
+            in itertools.product(pass_subject_conjuncts, pass_object_conjuncts):
+                pass_subj = verify_compound(pass_subj, sentence_dict)
+                pass_obj = verify_compound(pass_obj, sentence_dict)
+                triplets.append((pass_subj, root["text"], pass_obj))
     # normal
     # root without conjuncts (not a compound predicate)
     if "nsubj" in [sentence_dict[item]["dep"] for item in sentence_dict]:
@@ -133,10 +143,9 @@ def extract_triplet(sentence_dict):
 
 
 doc_examples = ['Man acts as though he were the shaper and master of language while, in fact, \
-                language remains the master of man.', 'Bob wants that house, but Eve wants the other. \
-                Linda likes both houses.', 'The old beggar ran after the rich man who was wearing \
-                a black coat', 'The flat tire and the bearing was not replaced by driver',
-                'Take two of these and call me in the morning.', "I love Maya and hate Sonya.",
+                language remains the master of man.', 'The old beggar ran after the rich man \
+                who was wearing a black coat', 'Take two of these and call me in the morning.',
+                "I love Maya and hate Sonya.", 'All you need is love!',
                 ]
 
 
@@ -144,10 +153,10 @@ def main():
     # phrase = input("Write text:\n")
     # doc = nlp(phrase)
 
-    # phrase = 'Maia loves Matt, Tim, and John while Jimmy and little Bob really like their gay firends Sheldon and Chelsea'
-    # phrase = 'All you need is love!'
-    # phrase = 'I hate Sonya and love Maya'
-    phrase = "Gregory and Tim ordered pepperoni pizza, orange juice, and fresh blueberry ice cream for tonight."
+    phrase = 'Bob wants that red house, but Eve likes the other one. Linda likes both houses.'
+    # phrase = 'Maia loves Matt, Tim, and John while Jimmy and little Bob really like their funny firends, Sheldon and Chelsea'
+    # phrase = "Gregory and Tim ordered pepperoni pizza, orange juice, and fresh blueberry ice cream for tonight."
+    # phrase = 'The flat tire and the bearing was not replaced by driver and his wife';
     doc = nlp(phrase)
 
     displacy.serve(doc, style='dep', page=True)
