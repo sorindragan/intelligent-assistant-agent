@@ -1,3 +1,4 @@
+import itertools
 import re
 import spacy
 from spacy import displacy
@@ -28,6 +29,7 @@ def tree_to_dict(sentence):
                                                      ]
     return dependency_dict
 
+
 def find_split_marker_advcl(document):
     markers = []
     for item in list(document):
@@ -35,21 +37,15 @@ def find_split_marker_advcl(document):
             markers.append(item.text)
     return markers
 
+
 def create_delimiters(markers_list):
     delimiters = ''
     for delimiter in markers_list:
         delimiters += delimiter + '|'
     return delimiters[:-1]
 
-def search_conjuncts(start_term, sentence_dict):
-    start_term = sentence_dict[start_term]
-    conjuncts = [start_term['text']]
-    for child in start_term['children']:
-        if sentence_dict[child]['dep'] == 'conj':
-            conjuncts.append(sentence_dict[child]['text'])
-    return conjuncts
 
-def find_object(agent, sentence_dict):
+def find_object_passive_voice(agent, sentence_dict):
     agent = sentence_dict[agent]
     if "obj" in agent["dep"]:
         return agent["text"]
@@ -57,55 +53,84 @@ def find_object(agent, sentence_dict):
         for child in agent["children"]:
             return find_object(child, sentence_dict)
 
+
+def find_all_conjuncts(sentence_dict, conjuncts_list):
+    start = sentence_dict[conjuncts_list[-1]]
+    if start["children"]:
+        for child in start["children"]:
+            if sentence_dict[child]["dep"] == "conj":
+                conjuncts_list.append(sentence_dict[child]["text"])
+                find_all_conjuncts(sentence_dict, conjuncts_list)
+
+
+def verify_compound(term, sentence_dict):
+    term = sentence_dict[term]
+    term_text = term["text"]
+    if term["children"]:
+        for child in term["children"]:
+            if sentence_dict[child]["dep"] == "compound":
+                term_text = sentence_dict[child]["text"] + " " + term_text
+    return term_text
+
+
 def extract_triplet(sentence_dict):
-    subject_list = []
-    predicate_list = []
-    object_list = []
-    root = [sentence_dict[item]["text"] for item in sentence_dict
+    triplets = []
+    root = [sentence_dict[item] for item in sentence_dict
             if sentence_dict[item]["dep"] == "ROOT"
             ][0]
 
-    # passive
+    # passive voice
     if "nsubjpass" in [sentence_dict[item]["dep"] for item in sentence_dict]:
         agents = [sentence_dict[item]["text"] for item in sentence_dict
                   if sentence_dict[item]["dep"] == "agent"
-                 ]
-        subject_list.append(find_object(agents[0], sentence_dict))
-        predicate_list.append(root)
-        object_list.append([sentence_dict[item]["text"] for item in sentence_dict
-                       if sentence_dict[item]["dep"] == "nsubjpass"
-                       ][0])
+                  ]
+        pass_subject = verify_compound(find_object_passive_voice(agents[0], sentence_dict), sentence_dict)
+        pass_object = verify_compound([sentence_dict[item]["text"] for item in sentence_dict
+                                       if sentence_dict[item]["dep"] == "nsubjpass"
+                                       ][0], sentence_dict)
+        triplets.append((pass_subject, root["text"], pass_object))
     # normal
+    # root without conjuncts (not a compound predicate)
     if "nsubj" in [sentence_dict[item]["dep"] for item in sentence_dict]:
         nsubject = [sentence_dict[item]["text"] for item in sentence_dict
                     if sentence_dict[item]["dep"] == "nsubj"
                     ][0]
-        nsubjects = search_conjuncts(nsubject, sentence_dict)
+        nsubj_conjuncts = [nsubject]
+        find_all_conjuncts(sentence_dict, nsubj_conjuncts)
+
         dobjects = [sentence_dict[item]["text"] for item in sentence_dict
                     if sentence_dict[item]["dep"] == "dobj"
                     ]
+
         pobjects = [sentence_dict[item]["text"] for item in sentence_dict
                     if sentence_dict[item]["dep"] == "pobj"
                     ]
         if dobjects:
-            for dobj in dobjects:
-                subject_list.append(nsubject)
-                predicate_list.append(root)
-                object_list.append(dobj)
+            dobj_conjuncts = [dobjects[0]]
+            find_all_conjuncts(sentence_dict, dobj_conjuncts)
+            for subj, dobj in itertools.product(nsubj_conjuncts, dobj_conjuncts):
+                subj = verify_compound(subj, sentence_dict)
+                dobj = verify_compound(dobj, sentence_dict)
+                triplets.append((subj, root["text"], dobj))
         elif pobjects:
-            for pobj in pobjects:
-                subject_list.append(nsubject)
-                predicate_list.append(root)
-                object_list.append(pobj)
+            pobj_conjuncts = [pobjects[0]]
+            find_all_conjuncts(sentence_dict, pobj_conjuncts)
+            for subj, pobj in itertools.product(nsubj_conjuncts, pobj_conjuncts):
+                subj = verify_compound(subj, sentence_dict)
+                pobj = verify_compound(pobj, sentence_dict)
+                triplets.append((subj, root["text"], pobj))
         else:
-            subject_list.append(nsubject)
-            predicate_list.append(root)
-            object_list.append([sentence_dict[item]["text"] for item in sentence_dict
-                                if (sentence_dict[item]["dep"] == "ccomp"
-                                    or sentence_dict[item]["dep"] == "xcomp")
-                                ][0])
+            object = [sentence_dict[item]["text"] for item in sentence_dict
+                      if (sentence_dict[item]["dep"] == "ccomp"
+                          or sentence_dict[item]["dep"] == "xcomp")
+                      ][0]
+            for subj in nsubj_conjuncts:
+                subj = verify_compound(subj, sentence_dict)
+                object = verify_compound(object, sentence_dict)
+                triplets.append((subj, root["text"], object))
 
-    return [(s, p, o) for (s, p, o) in zip(subject_list, predicate_list, object_list)]
+    return triplets
+
 
 doc_examples = ['Man acts as though he were the shaper and master of language while, in fact, \
                 language remains the master of man.', 'Bob wants that house, but Eve wants the other. \
@@ -114,16 +139,18 @@ doc_examples = ['Man acts as though he were the shaper and master of language wh
                 'Take two of these and call me in the morning.', "I love Maya and hate Sonya.",
                 ]
 
+
 def main():
     # phrase = input("Write text:\n")
     # doc = nlp(phrase)
 
     # phrase = 'Maia loves Matt, Tim, and John while Jimmy and little Bob really like their gay firends Sheldon and Chelsea'
-    phrase = "I hate Sonya and love Maya while you and Tim want banana icecream and some juice."
+    # phrase = 'All you need is love!'
+    # phrase = 'I hate Sonya and love Maya'
+    phrase = "Gregory and Tim ordered pepperoni pizza, orange juice, and fresh blueberry ice cream for tonight."
     doc = nlp(phrase)
 
     displacy.serve(doc, style='dep', page=True)
-
 
     triplets = []
     sentences = list(doc.sents)
@@ -145,6 +172,20 @@ def main():
             displacy.serve(c, style='dep', page=True)
             deps_dict = tree_to_dict(c)
             pprint(deps_dict)
+
+            # # test
+            # conj_test = ['cream']
+            # print("BEFORE: ", conj_test)
+            # find_all_conjuncts(deps_dict, conj_test)
+            # print()
+            # print("AFTER: ", conj_test)
+            #
+            # # test2
+            # word = 'pizza'
+            # print("BEFORE2: ", word)
+            # word = verify_compound(word, deps_dict)
+            # print()
+            # print("AFTER2: ", word)
 
             triplets = extract_triplet(deps_dict)
 
