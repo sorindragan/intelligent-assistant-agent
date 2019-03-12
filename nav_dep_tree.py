@@ -153,10 +153,10 @@ def main():
     # phrase = input("Write text:\n")
     # doc = nlp(phrase)
 
-    phrase = 'Bob wants that red house, but Eve likes the other one. Linda likes both houses.'
+    # phrase = 'Bob wants that red house, but Eve likes the other one. Linda likes both houses.'
     # phrase = 'Maia loves Matt, Tim, and John while Jimmy and little Bob really like their funny firends, Sheldon and Chelsea'
-    # phrase = "Gregory and Tim ordered pepperoni pizza, orange juice, and fresh blueberry ice cream for tonight."
-    # phrase = 'The flat tire and the bearing was not replaced by driver and his wife';
+    phrase = "Gregory and Tim ordered pepperoni pizza, orange juice, and fresh blueberry ice cream for tonight."
+    # phrase = 'The flat tire and the bearing were not replaced by driver and his wife';
     doc = nlp(phrase)
 
     displacy.serve(doc, style='dep', page=True)
