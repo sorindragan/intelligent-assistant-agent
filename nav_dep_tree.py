@@ -7,13 +7,12 @@ from pprint import pprint
 
 
 nlp = spacy.load('en')
-ADV_CL_MARKERS = ["after", "although", "as", "because", "before", "by the time",
-                  "even if", "even though", "every time", "if", "in case",
-                  "just in case", "like", "now that", "once", "only if",
-                  "rather than", "since", "so that", "than", "that", "though",
-                  "until", "when", "whenever", "where", "whereas", "wherever",
-                  "whether", "whether or not", "while", "why",
-                  ]
+# ADVERBIAL_CLAUSE_MARKERS = "after", "although", "as", "because", "before", "by the time",
+#                            "even if", "even though", "every time", "if", "in case",
+#                            "just in case", "like", "now that", "once", "only if",
+#                            "rather than", "since", "so that", "than", "that", "though",
+#                            "until", "when", "whenever", "where", "whereas", "wherever",
+#                            "whether", "whether or not", "while", "why",
 
 
 def tree_to_dict(sentence):
@@ -64,6 +63,7 @@ def find_all_conjuncts(sentence_dict, conjuncts_list):
 
 # TODO: handle negation
 
+
 def verify_compound(term, sentence_dict):
     term = sentence_dict[term]
     term_text = term["text"]
@@ -94,11 +94,10 @@ def extract_triplet(sentence_dict):
         pass_object_conjuncts = [pass_object]
         find_all_conjuncts(sentence_dict, pass_object_conjuncts)
 
-        for pass_subj, pass_obj \
-            in itertools.product(pass_subject_conjuncts, pass_object_conjuncts):
-                pass_subj = verify_compound(pass_subj, sentence_dict)
-                pass_obj = verify_compound(pass_obj, sentence_dict)
-                triplets.append((pass_subj, root["text"], pass_obj))
+        for pass_subj, pass_obj in itertools.product(pass_subject_conjuncts, pass_object_conjuncts):
+            pass_subj = verify_compound(pass_subj, sentence_dict)
+            pass_obj = verify_compound(pass_obj, sentence_dict)
+            triplets.append((pass_subj, root["text"], pass_obj))
     # normal
     # root without conjuncts (not a compound predicate)
     if "nsubj" in [sentence_dict[item]["dep"] for item in sentence_dict]:
@@ -143,9 +142,10 @@ def extract_triplet(sentence_dict):
 
 
 doc_examples = ['Man acts as though he were the shaper and master of language while, in fact, \
-                language remains the master of man.', 'The old beggar ran after the rich man \
-                who was wearing a black coat', 'Take two of these and call me in the morning.',
-                "I love Maya and hate Sonya.", 'All you need is love!',
+                language remains the master of man.',
+                'Take two of these and call me in the morning.',
+                'I love Maya and hate Sonya.',
+                'All you need is love!',
                 ]
 
 
@@ -153,10 +153,15 @@ def main():
     # phrase = input("Write text:\n")
     # doc = nlp(phrase)
 
-    # phrase = 'Bob wants that red house, but Eve likes the other one. Linda likes both houses.'
+    phrase = 'The old beggar ran after the rich man who was wearing a black coat'
+    #  OK
+    # phrase = 'Bob wants the red car, although Eve likes the yellow car. Linda likes both cars.'
+    # OK
     # phrase = 'Maia loves Matt, Tim, and John while Jimmy and little Bob really like their funny firends, Sheldon and Chelsea'
-    phrase = "Gregory and Tim ordered pepperoni pizza, orange juice, and fresh blueberry ice cream for tonight."
-    # phrase = 'The flat tire and the bearing were not replaced by driver and his wife';
+    # OK
+    # phrase = "Gregory and Tim ordered pepperoni pizza, orange juice, and fresh blueberry ice cream for tonight."
+    # OK
+    # phrase = 'The flat tire and the bearing were not replaced by driver and his wife'
     doc = nlp(phrase)
 
     displacy.serve(doc, style='dep', page=True)
@@ -174,10 +179,12 @@ def main():
         if "advcl" in [elem.dep_ for elem in list(doc)]:
             split_markers = find_split_marker_advcl(doc)
 
-            clauses = re.split(create_delimiters(split_markers), phrase)
+            clauses = re.split(create_delimiters(split_markers), s.text)
             clauses = [nlp(c) for c in clauses]
 
         for c in clauses:
+            print("Clause: ", c)
+            print()
             displacy.serve(c, style='dep', page=True)
             deps_dict = tree_to_dict(c)
             pprint(deps_dict)
