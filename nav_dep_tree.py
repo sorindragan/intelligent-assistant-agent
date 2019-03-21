@@ -7,12 +7,6 @@ from pprint import pprint
 
 
 nlp = spacy.load('en')
-# ADVERBIAL_CLAUSE_MARKERS = "after", "although", "as", "because", "before", "by the time",
-#                            "even if", "even though", "every time", "if", "in case",
-#                            "just in case", "like", "now that", "once", "only if",
-#                            "rather than", "since", "so that", "than", "that", "though",
-#                            "until", "when", "whenever", "where", "whereas", "wherever",
-#                            "whether", "whether or not", "while", "why",
 
 
 def tree_to_dict(sentence):
@@ -53,6 +47,43 @@ def find_object_passive_voice(agent, sentence_dict):
             return find_object_passive_voice(child, sentence_dict)
 
 
+def find_subject(root, sentence_dict):
+    node = sentence_dict[root]
+    if node["dep"] == "nsubj":
+        return node["text"]
+    elif node["children"]:
+        for child in node["children"]:
+            return find_subject(child, sentence_dict)
+
+
+def find_direct_objects(root, sentence_dict, dobjects_list):
+    node = sentence_dict[root]
+    if node["dep"] == "dobj":
+        dobjects_list.append(node["text"])
+    if node["children"]:
+        for child in node["children"]:
+            if sentence_dict[child]["dep"] != "relcl":
+                find_direct_objects(child, sentence_dict, dobjects_list)
+
+
+def find_preposition_objects(root, sentence_dict, pobjects_list):
+    node = sentence_dict[root]
+    if node["dep"] == "pobj":
+        pobjects_list.append(node["text"])
+    if node["children"]:
+        for child in node["children"]:
+            if sentence_dict[child]["dep"] != "relcl":
+                find_preposition_objects(child, sentence_dict, pobjects_list)
+
+
+def find_relatice_clause_root(sentence_dict):
+    relcl_list = [sentence_dict[item]["text"] for item in sentence_dict
+                  if sentence_dict[item]["dep"] == "relcl"
+                  ]
+    if relcl_list:
+        return relcl_list[0]
+
+
 def find_all_conjuncts(sentence_dict, conjuncts_list):
     start = sentence_dict[conjuncts_list[-1]]
     if start["children"]:
@@ -61,8 +92,8 @@ def find_all_conjuncts(sentence_dict, conjuncts_list):
                 conjuncts_list.append(sentence_dict[child]["text"])
                 find_all_conjuncts(sentence_dict, conjuncts_list)
 
-# TODO: handle negation
 
+# TODO: handle negation?
 
 def verify_compound(term, sentence_dict):
     term = sentence_dict[term]
@@ -76,11 +107,17 @@ def verify_compound(term, sentence_dict):
 
 def extract_triplet(sentence_dict):
     triplets = []
-    root = [sentence_dict[item] for item in sentence_dict
-            if sentence_dict[item]["dep"] == "ROOT"
-            ][0]
+    tree_root = [sentence_dict[item] for item in sentence_dict
+                 if sentence_dict[item]["dep"] == "ROOT"
+                 ][0]
 
-    # passive voice
+    root_conjuncts = [tree_root["text"]]
+    find_all_conjuncts(sentence_dict, root_conjuncts)
+    relcl_root = find_relatice_clause_root(sentence_dict)
+    if relcl_root:
+        root_conjuncts.append(relcl_root)
+
+    # passive voice base case
     if "nsubjpass" in [sentence_dict[item]["dep"] for item in sentence_dict]:
         agents = [sentence_dict[item]["text"] for item in sentence_dict
                   if sentence_dict[item]["dep"] == "agent"
@@ -97,46 +134,51 @@ def extract_triplet(sentence_dict):
         for pass_subj, pass_obj in itertools.product(pass_subject_conjuncts, pass_object_conjuncts):
             pass_subj = verify_compound(pass_subj, sentence_dict)
             pass_obj = verify_compound(pass_obj, sentence_dict)
-            triplets.append((pass_subj, root["text"], pass_obj))
+            triplets.append((pass_subj, tree_root["text"], pass_obj))
+
     # normal
-    # root without conjuncts (not a compound predicate)
-    if "nsubj" in [sentence_dict[item]["dep"] for item in sentence_dict]:
-        nsubject = [sentence_dict[item]["text"] for item in sentence_dict
-                    if sentence_dict[item]["dep"] == "nsubj"
-                    ][0]
-        nsubj_conjuncts = [nsubject]
-        find_all_conjuncts(sentence_dict, nsubj_conjuncts)
+    old_subject = None
+    for root in root_conjuncts:
+        print("RRRR: ", root)
+        if "nsubj" in [sentence_dict[item]["dep"] for item in sentence_dict]:
+            nsubject = None
+            nsubject = find_subject(root, sentence_dict)
+            if nsubject:
+                old_subject = nsubject
+            if not nsubject and old_subject:
+                nsubject = old_subject
 
-        dobjects = [sentence_dict[item]["text"] for item in sentence_dict
-                    if sentence_dict[item]["dep"] == "dobj"
-                    ]
+            nsubj_conjuncts = [nsubject]
+            find_all_conjuncts(sentence_dict, nsubj_conjuncts)
 
-        pobjects = [sentence_dict[item]["text"] for item in sentence_dict
-                    if sentence_dict[item]["dep"] == "pobj"
-                    ]
-        if dobjects:
-            dobj_conjuncts = [dobjects[0]]
-            find_all_conjuncts(sentence_dict, dobj_conjuncts)
-            for subj, dobj in itertools.product(nsubj_conjuncts, dobj_conjuncts):
-                subj = verify_compound(subj, sentence_dict)
-                dobj = verify_compound(dobj, sentence_dict)
-                triplets.append((subj, root["text"], dobj))
-        elif pobjects:
-            pobj_conjuncts = [pobjects[0]]
-            find_all_conjuncts(sentence_dict, pobj_conjuncts)
-            for subj, pobj in itertools.product(nsubj_conjuncts, pobj_conjuncts):
-                subj = verify_compound(subj, sentence_dict)
-                pobj = verify_compound(pobj, sentence_dict)
-                triplets.append((subj, root["text"], pobj))
-        else:
-            object = [sentence_dict[item]["text"] for item in sentence_dict
-                      if (sentence_dict[item]["dep"] == "ccomp"
-                          or sentence_dict[item]["dep"] == "xcomp")
-                      ][0]
-            for subj in nsubj_conjuncts:
-                subj = verify_compound(subj, sentence_dict)
-                object = verify_compound(object, sentence_dict)
-                triplets.append((subj, root["text"], object))
+            dobjects = []
+            pobjects = []
+            find_direct_objects(root, sentence_dict, dobjects)
+            find_preposition_objects(root, sentence_dict, pobjects)
+
+            if dobjects:
+                dobj_conjuncts = [dobjects[0]]
+                find_all_conjuncts(sentence_dict, dobj_conjuncts)
+                for subj, dobj in itertools.product(nsubj_conjuncts, dobj_conjuncts):
+                    subj = verify_compound(subj, sentence_dict)
+                    dobj = verify_compound(dobj, sentence_dict)
+                    triplets.append((subj, root, dobj))
+            if pobjects:
+                pobj_conjuncts = [pobjects[0]]
+                find_all_conjuncts(sentence_dict, pobj_conjuncts)
+                for subj, pobj in itertools.product(nsubj_conjuncts, pobj_conjuncts):
+                    subj = verify_compound(subj, sentence_dict)
+                    pobj = verify_compound(pobj, sentence_dict)
+                    triplets.append((subj, root, pobj))
+            if not (dobjects or pobjects):
+                object = [sentence_dict[item]["text"] for item in sentence_dict
+                          if (sentence_dict[item]["dep"] == "ccomp"
+                              or sentence_dict[item]["dep"] == "xcomp")
+                          ][0]
+                for subj in nsubj_conjuncts:
+                    subj = verify_compound(subj, sentence_dict)
+                    object = verify_compound(object, sentence_dict)
+                    triplets.append((subj, root, object))
 
     return triplets
 
@@ -150,11 +192,15 @@ doc_examples = ['Man acts as though he were the shaper and master of language wh
 
 
 def main():
-    # phrase = input("Write text:\n")
     # doc = nlp(phrase)
+    # phrase = input("Write text:\n")
 
-    phrase = 'The old beggar ran after the rich man who was wearing a black coat'
-    #  OK
+    phrase = "The tomato, which is one of the most popular salad ingredients, grows in many shapes and varieties in greenhouses around the world."
+    # OK
+    # phrase = 'The old beggar ran after the rich man who was wearing a black coat'
+    # OK
+    # phrase = 'I love Maya and hate Sonya'
+    # OK
     # phrase = 'Bob wants the red car, although Eve likes the yellow car. Linda likes both cars.'
     # OK
     # phrase = 'Maia loves Matt, Tim, and John while Jimmy and little Bob really like their funny firends, Sheldon and Chelsea'
