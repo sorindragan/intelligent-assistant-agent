@@ -28,10 +28,12 @@ class SentenceProcessor:
             delimiters += delimiter + '|'
         return delimiters[:-1]
 
-    def tree_to_dict(self, clause):
-        return clause
+    def display_tree(self):
+        displacy.serve(self.doc, style='dep', page=True)
 
     def process(self):
+        extractor = TripletExtractor()
+
         for sentence in self.sentences:
             print("Sentence: ", sentence)
             print("ROOT: ", sentence.root)
@@ -45,13 +47,11 @@ class SentenceProcessor:
 
             for clause in clauses:
                 print("Clause: ", clause)
+                if type(clause) == type(self.nlp(" ")):
+                    clause = list(clause.sents)[0]
 
-                deps_dict = self.tree_to_dict(clause)
-                pprint(deps_dict)
-
-                extractor = TripletExtractor()
-                clause_triplets = extractor.process(deps_dict)
+                clause_triplets = extractor.process(clause)
 
                 print(clause_triplets)
                 self.triplets += clause_triplets
-        return self.triplets
+        return list(set(self.triplets))

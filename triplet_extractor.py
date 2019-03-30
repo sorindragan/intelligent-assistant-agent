@@ -11,7 +11,7 @@ class TripletExtractor:
         self.triplets = []
 
     def find_all_conjuncts(self, node, conjuncts_list):
-        if not node.children:
+        if node.children:
             for child in node.children:
                 if child.dep_ != "conj":
                     continue
@@ -49,6 +49,13 @@ class TripletExtractor:
                 if child.dep_ != "relcl":
                     self.find_preposition_objects(child, pobjects_list)
 
+    def find_passive_voice_object(self, agent):
+        if "obj" in agent.dep_:
+            return agent
+        elif agent.children:
+            for child in agent.children:
+                return self.find_passive_voice_object(child)
+
     def verify_compound(self, node):
         compound_text = node.text
         if node.children:
@@ -69,6 +76,30 @@ class TripletExtractor:
 
         print("ROOT_CONJUCTS: ", [node.text for node in root_conjuncts])
 
+        # passive voice
+        if "nsubjpass" in [item.dep_
+                           for item in list(clause)
+                           ]:
+            agent = [item
+                     for item in list(clause)
+                     if item.dep_ == "agent"
+                     ][0]
+            pv_subject = self.find_passive_voice_object(agent)
+            pv_subject_conjuncts = [pv_subject]
+            self.find_all_conjuncts(pv_subject, pv_subject_conjuncts)
+            pv_object = [item
+                         for item in list(clause)
+                         if item.dep_ == "nsubjpass"
+                         ][0]
+            pv_object_conjnucts = [pv_object]
+            self.find_all_conjuncts(pv_object, pv_object_conjnucts)
+
+            for pv_subj, pv_obj in itertools.product(pv_subject_conjuncts, pv_object_conjnucts):
+                pv_subj = self.verify_compound(pv_subj)
+                pv_obj = self.verify_compound(pv_obj)
+                self.triplets.append((pv_subj, tree_root.text, pv_obj))
+
+        # normal
         old_subject = None
         for root in root_conjuncts:
             print("CURR ROOT: ", root)
@@ -76,13 +107,13 @@ class TripletExtractor:
                 nsubject = None
                 nsubject = self.find_subject(root)
                 if nsubject:
-                    print("NSUBJ_FIRST: ", nsubject)
+                    print("FIRST_NSUBJ: ", nsubject)
                     old_subject = nsubject
                 if not nsubject and old_subject:
                     nsubject = old_subject
 
                 nsubj_conjuncts = [nsubject]
-                self.find_all_conjuncts(root, nsubj_conjuncts)
+                self.find_all_conjuncts(nsubject, nsubj_conjuncts)
                 print("NSUBJ_CONJUNCTS: ", nsubj_conjuncts)
 
                 dobjects = []
@@ -95,18 +126,31 @@ class TripletExtractor:
                 if dobjects:
                     for dobject in dobjects:
                         dobj_conjuncts = [dobject]
-                        self.find_all_conjuncts(root, dobjects_list)
-                        for subj, dobj in itertools.product(nsubj_conjuncts_text, dobj_conjuncts):
+                        self.find_all_conjuncts(dobject, dobj_conjuncts)
+                        print("DOBJ_CONJUNCTS ", dobj_conjuncts)
+                        for subj, dobj in itertools.product(nsubj_conjuncts, dobj_conjuncts):
                             subj = self.verify_compound(subj)
                             dobj = self.verify_compound(dobj)
                             self.triplets.append((subj, root.text, dobj))
                 if pobjects:
                     for pobject in pobjects:
                         pobj_conjuncts = [pobject]
-                        self.find_all_conjuncts(root, pobj_conjuncts)
+                        self.find_all_conjuncts(pobject, pobj_conjuncts)
+                        print("POBJ_CONJUNCTS ", pobj_conjuncts)
                         for subj, pobj in itertools.product(nsubj_conjuncts, pobj_conjuncts):
                             subj = self.verify_compound(subj)
                             pobj = self.verify_compound(pobj)
                             self.triplets.append((subj, root.text, pobj))
+
+                if not (dobjects or pobjects):
+                    object = [item
+                              for item in list(clause)
+                              if (item.dep_ == "ccomp" or item.dep_ == "xcomp")
+                              ][0]
+
+                    for subj in nsubj_conjuncts:
+                        subj = self.verify_compound(subj)
+                        object = self.verify_compound(object)
+                        self.triplets.append((subj, root.text, object))
 
         return self.triplets
