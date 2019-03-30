@@ -13,13 +13,18 @@ def tree_to_dict(sentence):
     sentence = list(sentence)
     dependency_dict = {}
     for element in sentence:
-        dependency_dict[element.text] = {}
-        dependency_dict[element.text]["text"] = element.text
-        dependency_dict[element.text]["pos"] = element.pos_
-        dependency_dict[element.text]["dep"] = element.dep_
-        dependency_dict[element.text]["children"] = [child.text
-                                                     for child in element.children
-                                                     ]
+        element_dict = {}
+        element_dict["text"] = element.text
+        element_dict["pos"] = element.pos_
+        element_dict["dep"] = element.dep_
+        element_dict["children"] = [child.text
+                                    for child in element.children
+                                    ]
+        if element.text not in dependency_dict:
+            dependency_dict[element.text] = [element_dict]
+            continue
+        dependency_dict[element.text].append(element_dict)
+
     return dependency_dict
 
 
@@ -48,53 +53,60 @@ def find_object_passive_voice(agent, sentence_dict):
 
 
 def find_subject(root, sentence_dict):
-    node = sentence_dict[root]
+    node = sentence_dict[root][0]
     if node["dep"] == "nsubj":
         return node["text"]
     elif node["children"]:
         for child in node["children"]:
-            return find_subject(child, sentence_dict)
+            for apparition in sentence_dict[child]:
+                return find_subject(apparition["text"], sentence_dict)
 
 
 def find_direct_objects(root, sentence_dict, dobjects_list):
-    node = sentence_dict[root]
+    node = sentence_dict[root][0]
     if node["dep"] == "dobj":
         dobjects_list.append(node["text"])
     if node["children"]:
         for child in node["children"]:
-            if sentence_dict[child]["dep"] != "relcl":
-                find_direct_objects(child, sentence_dict, dobjects_list)
+            for apparition in sentence_dict[child]:
+                if apparition["dep"] != "relcl":
+                    find_direct_objects(apparition["text"], sentence_dict, dobjects_list)
 
-
+# BROKEN - infinite recursion
 def find_preposition_objects(root, sentence_dict, pobjects_list):
-    node = sentence_dict[root]
+    node = sentence_dict[root][0]
     if node["dep"] == "pobj":
         pobjects_list.append(node["text"])
     if node["children"]:
         for child in node["children"]:
-            if sentence_dict[child]["dep"] != "relcl":
-                find_preposition_objects(child, sentence_dict, pobjects_list)
+            for apparition in sentence_dict[child]:
+                if apparition["dep"] != "relcl":
+                    find_preposition_objects(apparition["text"], sentence_dict, pobjects_list)
 
 
 def find_relatice_clause_root(sentence_dict):
-    relcl_list = [sentence_dict[item]["text"] for item in sentence_dict
-                  if sentence_dict[item]["dep"] == "relcl"
+    relcl_list = [apparition["text"]
+                  for item in sentence_dict
+                  for apparition in sentence_dict[item]
+                  if apparition["dep"] == "relcl"
                   ]
     if relcl_list:
         return relcl_list[0]
 
 
 def find_all_conjuncts(sentence_dict, conjuncts_list):
-    start = sentence_dict[conjuncts_list[-1]]
+    start = sentence_dict[conjuncts_list[-1]][0]
+    print("START: ", start)
     if start["children"]:
         for child in start["children"]:
-            if sentence_dict[child]["dep"] == "conj":
-                conjuncts_list.append(sentence_dict[child]["text"])
-                find_all_conjuncts(sentence_dict, conjuncts_list)
+            for apparition in sentence_dict[child]:
+                print("APPPP: ", apparition)
+                if apparition["dep"] == "conj":
+                    conjuncts_list.append(apparition["text"])
+                    find_all_conjuncts(sentence_dict, conjuncts_list)
 
 
 # TODO: handle negation?
-
 def verify_compound(term, sentence_dict):
     term = sentence_dict[term]
     term_text = term["text"]
@@ -107,18 +119,27 @@ def verify_compound(term, sentence_dict):
 
 def extract_triplet(sentence_dict):
     triplets = []
-    tree_root = [sentence_dict[item] for item in sentence_dict
-                 if sentence_dict[item]["dep"] == "ROOT"
+    tree_root = [apparition
+                 for item in sentence_dict
+                 for apparition in sentence_dict[item]
+                 if apparition["dep"] == "ROOT"
                  ][0]
+    print("TREE ROOT: ", tree_root["text"])
 
     root_conjuncts = [tree_root["text"]]
     find_all_conjuncts(sentence_dict, root_conjuncts)
+    print("ROOT_CONJUCTS: ", root_conjuncts)
     relcl_root = find_relatice_clause_root(sentence_dict)
     if relcl_root:
+        print("RELCL: ", relcl_root)
         root_conjuncts.append(relcl_root)
 
-    # passive voice base case
-    if "nsubjpass" in [sentence_dict[item]["dep"] for item in sentence_dict]:
+    # passive voice base case  - not updated yet
+    if "nsubjpass" in [apparition["dep"]
+                       for item in sentence_dict
+                       for apparition in sentence_dict[item]
+                       ]:
+                       # TODO
         agents = [sentence_dict[item]["text"] for item in sentence_dict
                   if sentence_dict[item]["dep"] == "agent"
                   ]
@@ -139,22 +160,29 @@ def extract_triplet(sentence_dict):
     # normal
     old_subject = None
     for root in root_conjuncts:
-        print("RRRR: ", root)
-        if "nsubj" in [sentence_dict[item]["dep"] for item in sentence_dict]:
+        print("CURR ROOT: ", root)
+        if "nsubj" in [apparition["dep"]
+                       for item in sentence_dict
+                       for apparition in sentence_dict[item]
+                       ]:
             nsubject = None
             nsubject = find_subject(root, sentence_dict)
             if nsubject:
+                print("NSUBJ_FIRST: ", nsubject)
                 old_subject = nsubject
             if not nsubject and old_subject:
                 nsubject = old_subject
 
             nsubj_conjuncts = [nsubject]
             find_all_conjuncts(sentence_dict, nsubj_conjuncts)
+            print("NSUBJ_CONJUNCTS: ", nsubj_conjuncts)
 
             dobjects = []
             pobjects = []
             find_direct_objects(root, sentence_dict, dobjects)
             find_preposition_objects(root, sentence_dict, pobjects)
+            print("DOBJS: ", dobjects)
+            print("POBJS: ", pobjects)
 
             if dobjects:
                 dobj_conjuncts = [dobjects[0]]
@@ -210,7 +238,7 @@ def main():
     # phrase = 'The flat tire and the bearing were not replaced by driver and his wife'
     doc = nlp(phrase)
 
-    displacy.serve(doc, style='dep', page=True)
+    # displacy.serve(doc, style='dep', page=True)
 
     triplets = []
     sentences = list(doc.sents)
@@ -231,7 +259,7 @@ def main():
         for c in clauses:
             print("Clause: ", c)
             print()
-            displacy.serve(c, style='dep', page=True)
+            # displacy.serve(c, style='dep', page=True)
             deps_dict = tree_to_dict(c)
             pprint(deps_dict)
 
