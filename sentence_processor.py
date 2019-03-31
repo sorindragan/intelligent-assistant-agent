@@ -1,4 +1,3 @@
-import itertools
 import re
 import spacy
 from spacy import displacy
@@ -16,6 +15,15 @@ class SentenceProcessor:
         self.triplets = []
 
     def find_split_marker_advcl(self, document):
+        """ Return markers in case of Adverbial Clause.
+            Adverbial Clause Markers:
+                  "after", "although", "as", "because", "before", "by the time",
+                  "even if", "even though", "every time", "if", "in case",
+                  "just in case", "like", "now that", "once", "only if",
+                  "rather than", "since", "so that", "than", "that", "though",
+                  "until", "when", "whenever", "where", "whereas", "wherever",
+                  "whether", "whether or not", "while", "why".
+        """
         markers = []
         for item in list(document):
             if item.dep_ == "mark":
@@ -23,15 +31,18 @@ class SentenceProcessor:
         return markers
 
     def create_delimiters(self, markers_list):
+        """ Create delimiters that will go into the spilt function """
         delimiters = ''
         for delimiter in markers_list:
             delimiters += delimiter + '|'
         return delimiters[:-1]
 
     def display_tree(self):
+        """ Display the dependency tree at localhost:5000 """
         displacy.serve(self.doc, style='dep', page=True)
 
     def process(self):
+        """ Extract all triplets from given phrase """
         extractor = TripletExtractor()
 
         for sentence in self.sentences:
@@ -39,6 +50,7 @@ class SentenceProcessor:
             print("ROOT: ", sentence.root)
 
             clauses = [sentence]
+            # split a sentence in multiple sentences after adverbial clause modifiers
             if "advcl" in [elem.dep_ for elem in list(self.doc)]:
                 split_markers = self.find_split_marker_advcl(self.doc)
 
@@ -47,7 +59,7 @@ class SentenceProcessor:
 
             for clause in clauses:
                 print("Clause: ", clause)
-                if type(clause) == type(self.nlp(" ")):
+                if isinstance(clause, type(self.nlp(" "))):
                     clause = list(clause.sents)[0]
 
                 clause_triplets = extractor.process(clause)

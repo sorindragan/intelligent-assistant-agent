@@ -1,7 +1,5 @@
 import itertools
-import re
 import spacy
-from spacy import displacy
 from pprint import pprint
 
 
@@ -11,6 +9,10 @@ class TripletExtractor:
         self.triplets = []
 
     def find_all_conjuncts(self, node, conjuncts_list):
+        """ Return list of conjuncts of given node.
+            Example: "Ana and Bob went home."
+            Bob is a conjunct of Ana.
+        """
         if node.children:
             for child in node.children:
                 if child.dep_ != "conj":
@@ -18,7 +20,8 @@ class TripletExtractor:
                 conjuncts_list.append(child)
                 self.find_all_conjuncts(child, conjuncts_list)
 
-    def find_relatice_clause_root(self, clause):
+    def find_relative_clause_root(self, clause):
+        """ Return Relative Clause root if a Relative Cluase exists. """
         relcls = [node
                   for node in list(clause)
                   if node.dep_ == "relcl"
@@ -27,6 +30,7 @@ class TripletExtractor:
             return relcls[0]
 
     def find_subject(self, node):
+        """ Return the Nominal Subject. """
         if node.dep_ == "nsubj":
             return node
         elif node.children:
@@ -34,6 +38,7 @@ class TripletExtractor:
                 return self.find_subject(child)
 
     def find_direct_objects(self, node, dobjects_list):
+        """ Return the Direct Objects. """
         if node.dep_ == "dobj":
             dobjects_list.append(node)
         if node.children:
@@ -42,6 +47,7 @@ class TripletExtractor:
                     self.find_direct_objects(child, dobjects_list)
 
     def find_preposition_objects(self, node, pobjects_list):
+        """ Return the Prepositional Objects. """
         if node.dep_ == "pobj":
             pobjects_list.append(node)
         if node.children:
@@ -50,6 +56,9 @@ class TripletExtractor:
                     self.find_preposition_objects(child, pobjects_list)
 
     def find_passive_voice_object(self, agent):
+        """ Return the Passive Voice Object,
+            that is the Subject being acted upon.
+        """
         if "obj" in agent.dep_:
             return agent
         elif agent.children:
@@ -57,6 +66,9 @@ class TripletExtractor:
                 return self.find_passive_voice_object(child)
 
     def verify_compound(self, node):
+        """ Return the Compound in case it exists.
+            Example: "orange juice" instead of "juice".
+        """
         compound_text = node.text
         if node.children:
             for child in node.children:
@@ -65,18 +77,19 @@ class TripletExtractor:
         return compound_text
 
     def process(self, clause):
+        """ Extract triplets from a simple clause """
         tree_root = clause.root
         print("ROOT: ", tree_root)
         root_conjuncts = [tree_root]
         self.find_all_conjuncts(tree_root, root_conjuncts)
-        relcl_root = self.find_relatice_clause_root(clause)
+        relcl_root = self.find_relative_clause_root(clause)
         if relcl_root:
             print("RELCL: ", relcl_root)
             root_conjuncts.append(relcl_root)
 
         print("ROOT_CONJUCTS: ", [node.text for node in root_conjuncts])
 
-        # passive voice
+        # passive voice case
         if "nsubjpass" in [item.dep_
                            for item in list(clause)
                            ]:
@@ -99,7 +112,7 @@ class TripletExtractor:
                 pv_obj = self.verify_compound(pv_obj)
                 self.triplets.append((pv_subj, tree_root.text, pv_obj))
 
-        # normal
+        # active voice case
         old_subject = None
         for root in root_conjuncts:
             print("CURR ROOT: ", root)

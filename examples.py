@@ -7,5 +7,5 @@ doc_examples = ['Man acts as though he were the shaper and master of language wh
                 'The tomato, which is one of the most popular salad ingredients, \
                  grows in many shapes and varieties in greenhouses around the world.',
                 'Gregory and Tim ordered pepperoni pizza, orange juice, \
-                 and fresh blueberry ice cream for tonight.''
+                 and fresh blueberry ice cream for tonight.',
                 ]
