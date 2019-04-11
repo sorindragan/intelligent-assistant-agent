@@ -31,6 +31,9 @@ class TripletExtractor:
 
     def find_subject(self, node):
         """ Return the Nominal Subject. """
+        if node.text:
+            print(node)
+            print(list(node.children))
         if node.dep_ == "nsubj":
             return node
         elif node.children:
@@ -116,7 +119,9 @@ class TripletExtractor:
         old_subject = None
         for root in root_conjuncts:
             print("CURR ROOT: ", root)
+            print([(item.text, item.dep_) for item in list(clause)])
             if "nsubj" in [item.dep_ for item in list(clause)]:
+                print("INSIDE")
                 nsubject = None
                 nsubject = self.find_subject(root)
                 if nsubject:
@@ -126,6 +131,7 @@ class TripletExtractor:
                     nsubject = old_subject
 
                 nsubj_conjuncts = [nsubject]
+                print(nsubj_conjuncts)
                 self.find_all_conjuncts(nsubject, nsubj_conjuncts)
                 print("NSUBJ_CONJUNCTS: ", nsubj_conjuncts)
 
@@ -156,14 +162,18 @@ class TripletExtractor:
                             self.triplets.append((subj, root.text, pobj))
 
                 if not (dobjects or pobjects):
-                    object = [item
+                    objects = [item
                               for item in list(clause)
                               if (item.dep_ == "ccomp" or item.dep_ == "xcomp")
-                              ][0]
+                              ]
+                    object = "null"
+                    if objects:
+                        object = objects[0]
 
                     for subj in nsubj_conjuncts:
                         subj = self.verify_compound(subj)
-                        object = self.verify_compound(object)
+                        if object != "null":
+                            object = self.verify_compound(object)
                         self.triplets.append((subj, root.text, object))
 
         return self.triplets

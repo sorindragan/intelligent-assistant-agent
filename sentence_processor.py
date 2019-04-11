@@ -34,7 +34,7 @@ class SentenceProcessor:
         """ Create delimiters that will go into the spilt function """
         delimiters = ''
         for delimiter in markers_list:
-            delimiters += delimiter + '|'
+            delimiters += '(' + delimiter + ')( |,|;)|'
         return delimiters[:-1]
 
     def display_tree(self):
@@ -53,12 +53,15 @@ class SentenceProcessor:
             # split a sentence in multiple sentences after adverbial clause modifiers
             if "advcl" in [elem.dep_ for elem in list(self.doc)]:
                 split_markers = self.find_split_marker_advcl(self.doc)
-
                 clauses = re.split(self.create_delimiters(split_markers), sentence.text)
-                clauses = [self.nlp(c) for c in clauses]
+                clauses = [self.nlp(c) for c in clauses
+                           if c and c not in " ,;" and c not in split_markers
+                           ]
 
             for clause in clauses:
                 print("Clause: ", clause)
+                # TODO: Delete next line
+                # displacy.serve(clause, style='dep', page=True)
                 if isinstance(clause, type(self.nlp(" "))):
                     clause = list(clause.sents)[0]
 
