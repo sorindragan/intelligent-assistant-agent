@@ -29,16 +29,13 @@ class TripletExtractor:
         if relcls:
             return relcls[0]
 
-    def find_subject(self, node):
+    def find_subject(self, node, nsubj_list):
         """ Return the Nominal Subject. """
-        if node.text:
-            print(node)
-            print(list(node.children))
         if node.dep_ == "nsubj":
-            return node
-        elif node.children:
+            nsubj_list.append(node)
+        if node.children:
             for child in node.children:
-                return self.find_subject(child)
+                self.find_subject(child, nsubj_list)
 
     def find_direct_objects(self, node, dobjects_list):
         """ Return the Direct Objects. """
@@ -58,15 +55,15 @@ class TripletExtractor:
                 if child.dep_ != "relcl":
                     self.find_preposition_objects(child, pobjects_list)
 
-    def find_passive_voice_object(self, agent):
+    def find_passive_voice_object(self, agent, agent_list):
         """ Return the Passive Voice Object,
             that is the Subject being acted upon.
         """
         if "obj" in agent.dep_:
-            return agent
-        elif agent.children:
+            agent_list.append(agent)
+        if agent.children:
             for child in agent.children:
-                return self.find_passive_voice_object(child)
+                self.find_passive_voice_object(child, agent_list)
 
     def verify_compound(self, node):
         """ Return the Compound in case it exists.
@@ -100,8 +97,9 @@ class TripletExtractor:
                      for item in list(clause)
                      if item.dep_ == "agent"
                      ][0]
-            pv_subject = self.find_passive_voice_object(agent)
-            pv_subject_conjuncts = [pv_subject]
+            pv_subjects = []
+            self.find_passive_voice_object(agent, pv_subjects)
+            pv_subject_conjuncts = [pv_subjects[0]]
             self.find_all_conjuncts(pv_subject, pv_subject_conjuncts)
             pv_object = [item
                          for item in list(clause)
@@ -121,9 +119,9 @@ class TripletExtractor:
             print("CURR ROOT: ", root)
             print([(item.text, item.dep_) for item in list(clause)])
             if "nsubj" in [item.dep_ for item in list(clause)]:
-                print("INSIDE")
-                nsubject = None
-                nsubject = self.find_subject(root)
+                subjects = []
+                self.find_subject(root, subjects)
+                nsubject = subjects[0] if subjects else None
                 if nsubject:
                     print("FIRST_NSUBJ: ", nsubject)
                     old_subject = nsubject
