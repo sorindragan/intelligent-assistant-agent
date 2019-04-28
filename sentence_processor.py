@@ -60,8 +60,6 @@ class SentenceProcessor:
 
             for clause in clauses:
                 print("Clause: ", clause)
-                # TODO: Delete next line
-                # displacy.serve(clause, style='dep', page=True)
                 if isinstance(clause, type(self.nlp(" "))):
                     clause = list(clause.sents)[0]
 
