@@ -1,3 +1,4 @@
+pip==19.0.2
 ipython==5.5.0
 ipython-genutils==0.2.0
 more-itertools==7.0.0
