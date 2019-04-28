@@ -1,6 +1,6 @@
-Intelligent Assistant Agent
-
 [![Build Status](https://travis-ci.com/sorindragan/intelligent-assistant-agent.png)](https://travis-ci.com/sorindragan/intelligent-assistant-agent)
+
+## Intelligent Assistant Agent
 
 Usage Example:
 ```python
