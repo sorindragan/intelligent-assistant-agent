@@ -1,5 +1,7 @@
 Intelligent Assistant Agent
 
+[![Build Status](https://travis-ci.com/sorindragan/intelligent-assistant-agent.png)](https://travis-ci.com/sorindragan/intelligent-assistant-agent)
+
 Usage Example:
 ```python
 > from sentence_processor import SentenceProcessor
