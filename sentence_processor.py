@@ -67,4 +67,7 @@ class SentenceProcessor:
 
                 print(clause_triplets)
                 self.triplets += clause_triplets
-        return list(set(self.triplets))
+
+        final_triplets = list(set(self.triplets))
+        final_triplets.sort()
+        return final_triplets
