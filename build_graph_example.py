@@ -1,3 +1,4 @@
+import rdflib
 from rdflib import Graph
 from rdflib import URIRef, BNode, Literal
 from rdflib import Namespace
@@ -26,3 +27,10 @@ g.set((bob, FOAF.age, Literal(43)))
 
 with open("graph.rdf", "wb") as f:
     f.write(g.serialize())  # example: format='turtle'
+
+
+g=rdflib.Graph()
+g.load('http://dbpedia.org/resource/Semantic_Web')
+
+for s,p,o in g:
+    print(s,p,o)
