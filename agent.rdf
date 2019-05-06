@@ -3,15 +3,14 @@
    xmlns:ns1="http://agent.org/"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 >
-  <rdf:Description rdf:about="http://agent.org/truck">
-    <ns1:property rdf:resource="http://agent.org/yellow"/>
+  <rdf:Description rdf:about="http://agent.org/Man">
+    <ns1:acts rdf:resource="http://agent.org/null"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/car">
-    <ns1:property rdf:resource="http://agent.org/red"/>
-    <ns1:outraced rdf:resource="http://agent.org/truck"/>
-    <ns1:outraced rdf:resource="http://agent.org/tram"/>
+  <rdf:Description rdf:about="http://agent.org/language">
+    <ns1:remains_master_of rdf:resource="http://agent.org/man"/>
+    <ns1:remains_master_in rdf:resource="http://agent.org/fact"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/tram">
-    <ns1:property rdf:resource="http://agent.org/yellow"/>
+  <rdf:Description rdf:about="http://agent.org/he">
+    <ns1:were_shaper_of rdf:resource="http://agent.org/language"/>
   </rdf:Description>
 </rdf:RDF>

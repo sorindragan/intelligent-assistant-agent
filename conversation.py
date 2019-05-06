@@ -18,6 +18,9 @@ class Conversation:
         self.g.serialize(self.rdf_file)
 
     def listen(self, phrase):
+        """ Construct and update the RDF Graph based on triplets extracted
+            during a conversation
+        """
         sentence_processor = SentenceProcessor(phrase)
         triplets = sentence_processor.process()
         g = Graph()
@@ -27,7 +30,9 @@ class Conversation:
 
         for triplet in triplets:
             s, p, o = triplet
+            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
             subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
+
             # if pred == "property":
             #     pred = uri_property
 

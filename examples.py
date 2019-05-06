@@ -1,6 +1,4 @@
-doc_examples = ['Man acts as though he were the shaper and master of language while, in fact, \
-                language remains the master of man.',
-                'Take two of these and call me in the morning.',
+doc_examples = ['Take two of these and call me in the morning.',
                 'I love Maya and hate Sonya.',
                 'All you need is love!',
                 'The old beggar ran after the rich man who was wearing a black coat',
@@ -9,3 +7,11 @@ doc_examples = ['Man acts as though he were the shaper and master of language wh
                 'Gregory and Tim ordered pepperoni pizza, orange juice, \
                  and fresh blueberry ice cream for tonight.',
                 ]
+
+doc_status = ['Y',
+              'Y',
+              'N',
+              'Y',
+              'Y',
+              'Y',
+              ]

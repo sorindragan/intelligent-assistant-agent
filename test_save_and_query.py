@@ -11,12 +11,13 @@ def rdf_query(file_name):
     g1.parse(file_name, format="xml")
 
     # who outraced the truck ?
-    responses = g1.query(
-        """PREFIX agent: <http://agent.org/>
-        SELECT ?s
-        WHERE {
-            ?s agent:outraced agent:truck .
-        }""")
+    q = """PREFIX agent: <http://agent.org/>
+    SELECT ?s
+    WHERE {{
+        ?s agent:{} agent:{} .
+    }}""".format("outraced", "truck")
+    print(q)
+    responses = g1.query(q)
 
     string_responses = []
     for response in responses:
@@ -30,5 +31,4 @@ def test_save_and_query():
     phrase = "The red car outraced the yellow truck."
 
     rdf_save(phrase, file_name)
-
     assert rdf_query(file_name) == output
