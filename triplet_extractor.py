@@ -312,37 +312,44 @@ class TripletExtractor:
             if objects:
                 object = objects[0]
 
-                counter_subj = Counter([subj.text for subj in nsubj_conjuncts])
-                for i, subj in enumerate(nsubj_conjuncts):
-                    subj_idx = ""
-                    if counter_subj[subj.text] > 1:
-                        subj_idx = str(i)
+            counter_subj = Counter([subj.text for subj in nsubj_conjuncts])
+            for i, subj in enumerate(nsubj_conjuncts):
+                subj_idx = ""
+                if counter_subj[subj.text] > 1:
+                    subj_idx = str(i)
 
-                    subj_properties = []
-                    self.find_property(subj, subj_properties)
-                    subj_c = self.verify_compound(subj)
+                subj_properties = []
+                self.find_property(subj, subj_properties)
+                subj_c = self.verify_compound(subj)
 
-                    if subj_properties:
-                        for prop in subj_properties:
-                            self.triplets.append((subj_c + subj_idx, "property", prop.text))
+                if subj_properties:
+                    for prop in subj_properties:
+                        self.triplets.append((subj_c + subj_idx, "property", prop.text))
 
-                    if type(object) != type("null"):
-                        obj_properties = []
-                        self.find_property(object, obj_properties)
-                        object_c = self.verify_compound(object)
+                pred = self.check_predicative_adjectives(root)
+                if pred == root.text:
+                    pred = self.check_attr(root)
+                if particle:
+                    particle = " " + particle
 
-                        if obj_properties:
-                            for prop in obj_properties:
-                                self.triplets.append((object_c, "property", prop.text))
+                if type(object) != type("null"):
+                    obj_properties = []
+                    self.find_property(object, obj_properties)
+                    object_c = self.verify_compound(object)
 
-                    pred = self.check_predicative_adjectives(root)
-                    if pred == root.text:
-                        pred = self.check_attr(root)
-                    if particle:
-                        particle = " " + particle
+                    if obj_properties:
+                        for prop in obj_properties:
+                            self.triplets.append((object_c, "property", prop.text))
+
                     object_particle = self.find_particle(object)
                     if object_particle:
                         object_particle = " " + object_particle
                     self.triplets.append((subj_c + subj_idx, pred + particle, object_c + object_particle))
+                else:
+                    if not dobjects and not pobjects:
+                        self.triplets.append((subj_c + subj_idx, pred + particle, object))
 
+        self.triplets = [(t[0].lower(), t[1].lower(), t[2].lower())
+                         for t in self.triplets
+                         ]
         return self.triplets
