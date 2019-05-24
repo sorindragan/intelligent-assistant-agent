@@ -279,7 +279,8 @@ class TripletExtractor:
                             self.check_attr(root, attr_properties)
                             if attr_properties:
                                 for prop in attr_properties:
-                                    self.triplets.append((subj_c + subj_idx, "property", prop.text))
+                                    prop_c = self.verify_compound(prop)
+                                    self.triplets.append((subj_c + subj_idx, "property", prop_c))
 
                             pred = self.check_predicative_adjectives(root)
                             if particle:
@@ -420,7 +421,7 @@ class TripletExtractor:
                             for p in properties:
                                 self.triplets.append((prop_c, "property", p.text))
 
-                            self.triplets.append((subj_c + subj_idx, "property", prop.text))
+                            self.triplets.append((subj_c + subj_idx, "property", prop_c))
 
             if not (dobjects or pobjects or cobjects):
                 print("Without objects")

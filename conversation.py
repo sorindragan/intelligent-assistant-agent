@@ -3,6 +3,7 @@ from rdflib import Namespace
 from pprint import pprint
 
 from sentence_processor import SentenceProcessor
+from question_processor import QuestionProcessor
 
 
 class Conversation:
@@ -40,8 +41,43 @@ class Conversation:
 
         g.serialize(self.rdf_file)
 
+    def yes_no_query(self, triplets, g):
+        query_triplets = []
+        n = self.n
+        for triplet in triplets:
+            s, p, o = triplet
+            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
+            subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
+            query_triplets.append((subj, pred, obj))
+
+        if all([True if triplet in g else False
+                for triplet in query_triplets
+                ]):
+            response = "Yes."
+        else:
+            response = "No."
+        return response
+
+
     def reply(self, phrase):
-        pass
+        """ Construct query and interogate RDF Graph based on triplets extracted
+            during a conversation
+        """
+        g = Graph()
+        g.parse(self.rdf_file, format="xml")
+
+        question_processor = QuestionProcessor(phrase)
+        triplets = question_processor.process()
+        # TODO: costruct queries
+        wh_list = ["who", "what", "where", "why", "when", "which", "how"]
+
+        # yes/no questions
+        if phrase.split()[0].lower() not in wh_list:
+            response = self.yes_no_query(triplets, g)
+
+        # return response
+
+        return response
 
     def process(self, phrase):
 
@@ -50,6 +86,6 @@ class Conversation:
         elif phrase.lower().strip("!").strip(".") in self.greetings:
             return "Hello! What a wonderful day!"
         elif '?' in phrase:
-            self.reply(phrase)
+            return self.reply(phrase)
         else:
             self.listen(phrase)
