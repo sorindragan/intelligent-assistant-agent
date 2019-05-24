@@ -20,29 +20,28 @@ class TripletExtractor:
                     particle = child.text
         return particle
 
-    def check_attr(self, root):
+    def check_attr(self, root, properties):
         """ Find the attribute introduced by the root in case it exists
-            Example: "is master" instead of "is"
-            The difference between check_attr and check_predicative_adjectives
-            is the one between a substantive and an adjective
+            and use it as a "property" for the subj
+            Example: "pizza is italian"
+            will result in (pizza, "property", italian)
         """
-        full_root = root.text
         if root.children:
             for child in root.children:
                 if child.dep_ == "attr":
-                    full_root = root.text + " " + child.text
-        return full_root
+                    properties.append(child)
 
     def check_predicative_adjectives(self, root):
-        """ In case of a nominal predicate find the predicative name also
-            Example: "is faster" instead of "is"
+        """ In case of a nominal predicate
+            replace the root with the adjectival complement
+            Example: "faster" instead of "is" in the "is faster" construction
         """
-        full_root = root.text
+        new_root = root.text
         if root.children:
             for child in root.children:
                 if child.dep_ == "acomp":
-                    full_root = root.text + " " + child.text
-        return full_root
+                    new_root = child.text
+        return new_root
 
     def find_property(self, node, descriptions):
         """ Return properties of a subject/object <Name>
@@ -131,7 +130,9 @@ class TripletExtractor:
         """ Extract triplets from a simple clause """
         tree_root = clause.root
         print("ROOT: ", tree_root)
+        # initial sentence root
         root_conjuncts = [tree_root]
+        # all predicates in the sentence
         self.find_all_conjuncts(tree_root, root_conjuncts)
         relcl_root = self.find_relative_clause_root(clause)
 
@@ -142,6 +143,7 @@ class TripletExtractor:
         print("ROOT_CONJUCTS: ", [node.text for node in root_conjuncts])
 
         # simple passive voice case
+        pv_subjects = []
         if "nsubjpass" in [item.dep_
                            for item in list(clause)
                            ]:
@@ -150,7 +152,6 @@ class TripletExtractor:
                      if item.dep_ == "agent"
                      ][0]
 
-            pv_subjects = []
             self.find_passive_voice_object(agent, pv_subjects)
             pv_subject = pv_subjects[0]
             pv_subject_conjuncts = [pv_subject]
@@ -166,6 +167,7 @@ class TripletExtractor:
             for pv_subj, pv_obj in itertools.product(pv_subject_conjuncts, pv_object_conjnucts):
                 subj_properties = []
                 obj_properties = []
+
                 self.find_property(pv_subj, subj_properties)
                 self.find_property(pv_obj, obj_properties)
 
@@ -175,6 +177,7 @@ class TripletExtractor:
                 if subj_properties:
                     for prop in subj_properties:
                         self.triplets.append((pv_subj, "property", prop.text))
+
                 if obj_properties:
                     for prop in obj_properties:
                         self.triplets.append((pv_obj, "property", prop.text))
@@ -184,6 +187,7 @@ class TripletExtractor:
         # active voice case
         old_subject = None
         for no, root in enumerate(root_conjuncts):
+            # consider each subtree of every predicate independetly
             if no + 1 < len(root_conjuncts):
                 next_root = root_conjuncts[no + 1]
             else:
@@ -192,11 +196,15 @@ class TripletExtractor:
             particle = self.find_particle(root)
             print("CURR ROOT: ", root)
             print([(item.text, item.dep_) for item in list(clause)])
+
+            nsubj_conjuncts = []
             if "nsubj" in [item.dep_ for item in list(clause)]:
                 subjects = []
                 self.find_subject(root, subjects, next_root)
                 nsubject = subjects[0] if subjects else None
 
+                # check if there is a new subject
+                # or the same subject does another action
                 if nsubject:
                     print("FIRST_NSUBJ: ", nsubject)
                     old_subject = nsubject
@@ -207,7 +215,9 @@ class TripletExtractor:
                 print(nsubj_conjuncts)
                 self.find_all_conjuncts(nsubject, nsubj_conjuncts)
                 print("NSUBJ_CONJUNCTS: ", nsubj_conjuncts)
-            else:
+
+            # imperative sentences (no subject)
+            elif not pv_subjects:
                 nsubj_conjuncts = [spacy.load('en')("null")[0]]
                 print(nsubj_conjuncts)
 
@@ -216,17 +226,28 @@ class TripletExtractor:
             self.find_direct_objects(root, dobjects, next_root)
             self.find_preposition_objects(root, pobjects, next_root)
 
+            # clausal components
+            cobjects = [item
+                      for item in list(clause)
+                      if (item.dep_ == "ccomp" or item.dep_ == "xcomp")
+                      ]
+
             print("DOBJS: ", dobjects)
             print("POBJS: ", pobjects)
+            print("COBJS: ", cobjects)
 
-            if dobjects:
+            if dobjects and not cobjects:
                 for dobject in dobjects:
                     dobj_conjuncts = [dobject]
                     self.find_all_conjuncts(dobject, dobj_conjuncts)
                     print("DOBJ_CONJUNCTS ", dobj_conjuncts)
                     # number instances of objects if they are of the same type
-                    counter_subj = Counter([subj.text for subj in nsubj_conjuncts])
-                    counter_dobj = Counter([dobj.text for dobj in dobj_conjuncts])
+                    counter_subj = Counter([subj.text for subj in nsubj_conjuncts]) \
+                                    if nsubj_conjuncts else 0
+                    counter_dobj = Counter([dobj.text for dobj in dobj_conjuncts]) \
+                                    if dobj_conjuncts else 0
+
+                    # handle multiple identical words
                     for i, subj in enumerate(nsubj_conjuncts):
                         for j, dobj in enumerate(dobj_conjuncts):
                             subj_idx = ""
@@ -254,21 +275,29 @@ class TripletExtractor:
                                 for prop in dobj_properties:
                                     self.triplets.append((dobj_c + dobj_idx, "property", prop.text))
 
+                            attr_properties = []
+                            self.check_attr(root, attr_properties)
+                            if attr_properties:
+                                for prop in attr_properties:
+                                    self.triplets.append((subj_c + subj_idx, "property", prop.text))
+
                             pred = self.check_predicative_adjectives(root)
-                            if pred == root.text:
-                                pred = self.check_attr(root)
                             if particle:
                                 particle = " " + particle
                             self.triplets.append((subj_c + subj_idx, pred + particle, dobj_c + dobj_idx))
-            if pobjects:
+            if pobjects and not cobjects:
                 for pobject in pobjects:
                     pobj_conjuncts = [pobject]
-                    preposition = " " + pobject.head.text
+                    preposition = pobject.head.text + " "
                     self.find_all_conjuncts(pobject, pobj_conjuncts)
                     print("POBJ_CONJUNCTS ", pobj_conjuncts)
+                    # number instances of objects if they are of the same type
+                    counter_subj = Counter([subj.text for subj in nsubj_conjuncts]) \
+                                    if nsubj_conjuncts else 0
+                    counter_pobj = Counter([pobj.text for pobj in pobj_conjuncts]) \
+                                    if pobj_conjuncts else 0
 
-                    counter_subj = Counter([subj.text for subj in nsubj_conjuncts])
-                    counter_pobj = Counter([pobj.text for pobj in pobj_conjuncts])
+                    # handle multiple identical words
                     for i, subj in enumerate(nsubj_conjuncts):
                         for j, pobj in enumerate(pobj_conjuncts):
                             subj_idx = ""
@@ -296,58 +325,123 @@ class TripletExtractor:
                                 for prop in pobj_properties:
                                     self.triplets.append((pobj_c + pobj_idx, "property", prop.text))
 
+                            attr_properties = []
+                            self.check_attr(root, attr_properties)
+                            if attr_properties:
+                                for prop in attr_properties:
+                                    self.triplets.append((subj_c + subj_idx, "property", prop.text))
+
                             pred = self.check_predicative_adjectives(root)
-                            if pred == root.text:
-                                pred = self.check_attr(root)
                             if particle:
                                 particle = " " + particle
-                            self.triplets.append((subj_c + subj_idx, pred + particle + preposition, pobj_c + pobj_idx))
+                            self.triplets.append((subj_c + subj_idx, pred + particle, preposition + pobj_c + pobj_idx))
 
-            objects = [item
-                      for item in list(clause)
-                      # if (item.dep_ == "ccomp" or item.dep_ == "xcomp")
-                      if item.dep_ == "xcomp"
-                      ]
-            object = "null"
-            if objects:
-                object = objects[0]
+            # number subjects in sentence
+            counter_subj = Counter([subj.text for subj in nsubj_conjuncts]) \
+                                    if nsubj_conjuncts else 0
 
-            counter_subj = Counter([subj.text for subj in nsubj_conjuncts])
-            for i, subj in enumerate(nsubj_conjuncts):
-                subj_idx = ""
-                if counter_subj[subj.text] > 1:
-                    subj_idx = str(i)
+            if cobjects:
+                object = cobjects[0]
 
-                subj_properties = []
-                self.find_property(subj, subj_properties)
-                subj_c = self.verify_compound(subj)
+                # handle multiple identical subjects
+                for i, subj in enumerate(nsubj_conjuncts):
+                    subj_idx = ""
+                    if counter_subj[subj.text] > 1:
+                        subj_idx = str(i)
 
-                if subj_properties:
-                    for prop in subj_properties:
-                        self.triplets.append((subj_c + subj_idx, "property", prop.text))
+                    subj_properties = []
+                    self.find_property(subj, subj_properties)
+                    subj_c = self.verify_compound(subj)
 
-                pred = self.check_predicative_adjectives(root)
-                if pred == root.text:
-                    pred = self.check_attr(root)
-                if particle:
-                    particle = " " + particle
+                    if subj_properties:
+                        for prop in subj_properties:
+                            self.triplets.append((subj_c + subj_idx, "property", prop.text))
 
-                if type(object) != type("null"):
-                    obj_properties = []
-                    self.find_property(object, obj_properties)
-                    object_c = self.verify_compound(object)
+                    attr_properties = []
+                    self.check_attr(root, attr_properties)
+                    if attr_properties:
+                        for prop in attr_properties:
+                            self.triplets.append((subj_c + subj_idx, "property", prop.text))
 
-                    if obj_properties:
-                        for prop in obj_properties:
-                            self.triplets.append((object_c, "property", prop.text))
+                    pred = self.check_predicative_adjectives(root)
+                    if particle:
+                        particle = " " + particle
 
-                    object_particle = self.find_particle(object)
-                    if object_particle:
-                        object_particle = " " + object_particle
-                    self.triplets.append((subj_c + subj_idx, pred + particle, object_c + object_particle))
-                else:
-                    if not dobjects and not pobjects:
-                        self.triplets.append((subj_c + subj_idx, pred + particle, object))
+                    self.triplets.append((subj_c + subj_idx, pred + particle, "null"))
+
+                clausal_subj = subjects[-1] if subjects else "null"
+                clausal_pred = object.text
+                c_subj_c = self.verify_compound(clausal_subj)
+                c_subj_properties = []
+                self.find_property(clausal_subj, c_subj_properties)
+                for prop in c_subj_properties:
+                    self.triplets.append((c_subj_c, "property", prop.text))
+
+                if pobjects:
+                    print("Clausal with pobject")
+                    for pobj in pobjects:
+                        preposition = pobj.head.text + " "
+                        c_pobj_properties = []
+                        self.find_property(pobj, c_pobj_properties)
+                        for prop in c_pobj_properties:
+                            self.triplets.append((pobj.text, "property", prop.text))
+                        self.triplets.append((c_subj_c, clausal_pred, preposition + pobj.text))
+
+                if dobjects:
+                    print("Clausal with dobjects")
+                    for dobj in dobjects:
+                        c_dobj_properties = []
+                        self.find_property(dobj, c_dobj_properties)
+                        for prop in c_dobj_properties:
+                            self.triplets.append((dobj.text, "property", prop.text))
+                        self.triplets.append((c_subj_c, clausal_pred, dobj.text))
+
+            else:
+                for i, subj in enumerate(nsubj_conjuncts):
+                    subj_idx = ""
+                    if counter_subj[subj.text] > 1:
+                        subj_idx = str(i)
+
+                    subj_properties = []
+                    self.find_property(subj, subj_properties)
+                    subj_c = self.verify_compound(subj)
+
+                    if subj_properties:
+                        for prop in subj_properties:
+                            self.triplets.append((subj_c + subj_idx, "property", prop.text))
+
+                    attr_properties = []
+                    self.check_attr(root, attr_properties)
+                    if attr_properties:
+                        for prop in attr_properties:
+                            properties = []
+                            self.find_property(prop, properties)
+                            prop_c = self.verify_compound(prop)
+                            for p in properties:
+                                self.triplets.append((prop_c, "property", p.text))
+
+                            self.triplets.append((subj_c + subj_idx, "property", prop.text))
+
+            if not (dobjects or pobjects or cobjects):
+                print("Without objects")
+                for i, subj in enumerate(nsubj_conjuncts):
+                    subj_idx = ""
+                    if counter_subj[subj.text] > 1:
+                        subj_idx = str(i)
+
+                    subj_properties = []
+                    self.find_property(subj, subj_properties)
+                    subj_c = self.verify_compound(subj)
+
+                    if subj_properties:
+                        for prop in subj_properties:
+                            self.triplets.append((subj_c + subj_idx, "property", prop.text))
+
+                    pred = self.check_predicative_adjectives(root)
+                    if particle:
+                        particle = " " + particle
+
+                    self.triplets.append((subj_c + subj_idx, pred + particle, "null"))
 
         self.triplets = [(t[0].lower(), t[1].lower(), t[2].lower())
                          for t in self.triplets
