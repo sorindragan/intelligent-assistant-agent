@@ -126,7 +126,7 @@ class TripletExtractor:
                     compound_text = child.text + " " + node.text
         return compound_text
 
-    def process(self, clause):
+    def process(self, clause, type):
         """ Extract triplets from a simple clause """
         tree_root = clause.root
         print("ROOT: ", tree_root)
@@ -195,7 +195,7 @@ class TripletExtractor:
 
             particle = self.find_particle(root)
             print("CURR ROOT: ", root)
-            print([(item.text, item.dep_) for item in list(clause)])
+            print("Deps: ", [(item.text, item.dep_) for item in list(clause)])
 
             nsubj_conjuncts = []
             if "nsubj" in [item.dep_ for item in list(clause)]:
@@ -212,14 +212,18 @@ class TripletExtractor:
                     nsubject = old_subject
 
                 nsubj_conjuncts = [nsubject]
-                print(nsubj_conjuncts)
                 self.find_all_conjuncts(nsubject, nsubj_conjuncts)
                 print("NSUBJ_CONJUNCTS: ", nsubj_conjuncts)
 
             # imperative sentences (no subject)
             elif not pv_subjects:
-                nsubj_conjuncts = [spacy.load('en')("null")[0]]
-                print(nsubj_conjuncts)
+                if type == "q":
+                    nsubj_conjuncts = [item for item in list(clause)
+                                       if item.dep_ == "npadvmod"
+                                       ]
+                else:
+                    nsubj_conjuncts = [spacy.load('en')("null")[0]]
+                print("Else subj: ", nsubj_conjuncts)
 
             dobjects = []
             pobjects = []

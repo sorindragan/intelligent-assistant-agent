@@ -63,11 +63,12 @@ class SentenceProcessor:
                 if isinstance(clause, type(self.nlp(" "))):
                     clause = list(clause.sents)[0]
 
-                clause_triplets = extractor.process(clause)
+                clause_triplets = extractor.process(clause, "s")
 
                 print(clause_triplets)
                 self.triplets += clause_triplets
 
         final_triplets = list(set(self.triplets))
         final_triplets.sort()
+        print("Sentence triplets: ", final_triplets)
         return final_triplets

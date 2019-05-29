@@ -21,14 +21,16 @@ class QuestionProcessor:
     def process(self):
         """ Extract all triplets from given phrase """
         extractor = TripletExtractor()
-        all_triplets = []
 
         for sentence in self.sentences:
             print("Sentence: ", sentence)
             print("ROOT: ", sentence.root)
 
-            question_triplets = extractor.process(sentence)
+            question_triplets = extractor.process(sentence, "q")
             print(question_triplets)
-            all_triplets += question_triplets
+            self.triplets += question_triplets
 
-        return all_triplets
+        self.triplets = list(set(self.triplets))
+        self.triplets.sort()
+        print("Question triplets: ", self.triplets)
+        return self.triplets
