@@ -3,10 +3,33 @@
    xmlns:ns1="http://agent.org/"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 >
-  <rdf:Description rdf:about="http://agent.org/he">
-    <ns1:smart rdf:resource="http://agent.org/null"/>
+  <rdf:Description rdf:about="http://agent.org/name">
+    <ns1:is rdf:resource="http://agent.org/null"/>
+    <ns1:property rdf:resource="http://agent.org/sudo"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/february">
+    <ns1:property rdf:resource="http://agent.org/19th"/>
+    <ns1:property rdf:resource="http://agent.org/20th"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/phone">
+    <ns1:is rdf:resource="http://agent.org/null"/>
+    <ns1:property rdf:resource="http://agent.org/236"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/she">
+    <ns1:attend rdf:resource="http://agent.org/ai_conference"/>
+    <ns1:attend rdf:resource="http://agent.org/in_bucharest"/>
+    <ns1:attend rdf:resource="http://agent.org/on_february"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/today">
+    <ns1:is rdf:resource="http://agent.org/null"/>
+    <ns1:property rdf:resource="http://agent.org/february"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/i">
     <ns1:have rdf:resource="http://agent.org/dog"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/he">
+    <ns1:fed rdf:resource="http://agent.org/in_evening"/>
+    <ns1:fed rdf:resource="http://agent.org/in_morning"/>
+    <ns1:ha rdf:resource="http://agent.org/null"/>
   </rdf:Description>
 </rdf:RDF>
