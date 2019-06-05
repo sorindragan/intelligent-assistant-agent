@@ -110,6 +110,8 @@ class CorefSolver():
             
             if depth is None:
                 depth = len(self.prev)
+            else:
+                depth = min(depth, len(self.prev))
                 
             while (unsolv_coref != [] and (current_depth != depth)):
                 iterative_solver = self.prev[depth - 1 - current_depth] + " " + iterative_solver
