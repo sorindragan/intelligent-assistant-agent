@@ -11,12 +11,12 @@ def main():
     speech_to_text = SpeechToText()
     while True:
         # say
-        utterance = speech_to_text.process()
-        response = c.process(utterance)
+        # utterance = speech_to_text.process()
+        # response = c.process(utterance)
 
         # type
-        # utterance = str(sys.stdin.readline())
-        # response = c.process(utterance[:-1])
+        utterance = str(sys.stdin.readline())
+        response = c.process(utterance[:-1])
 
         if response:
 

@@ -1,5 +1,4 @@
-from nltk.stem import PorterStemmer
-from nltk.stem import WordNetLemmatizer
+from nltk.stem import PorterStemmer, WordNetLemmatizer
 from pprint import pprint
 from rdflib import Graph, Literal, URIRef
 from rdflib import Namespace
@@ -38,13 +37,16 @@ class Conversation:
 
         for triplet in triplets:
             s, p, o = triplet
-            # s, p, o = self.stemmer.stem(s), self.stemmer.stem(p), self.stemmer.stem(o)
-            s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
+            st_s, st_p, st_o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
+            # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
             s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
-            print(s, p, o)
-            subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
-
+            st_s, st_p, st_o = st_s.replace(" ", "_"), st_p.replace(" ", "_"), st_o.replace(" ", "_")
+            print((s, p, o), (st_s, st_p, st_o))
+            subj, pred, obj = URIRef(n + st_s), URIRef(n + st_p), URIRef(n + st_o)
             g.add((subj, pred, obj))
+            g.add((subj, URIRef(n + "reference"), URIRef(n + s)))
+            g.add((pred, URIRef(n + "reference"), URIRef(n + p)))
+            g.add((obj, URIRef(n + "reference"), URIRef(n + o)))
 
         g.serialize(self.rdf_file)
 
@@ -53,8 +55,8 @@ class Conversation:
         n = self.n
         for triplet in triplets:
             s, p, o = triplet
-            # s, p, o = self.stemmer.stem(s), self.stemmer.stem(p), self.stemmer.stem(o)
-            s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
+            s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
+            # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
             s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
             print(s, p, o)
             subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
@@ -76,8 +78,8 @@ class Conversation:
             s, p, o = triplet
             if any([s == "what", o == "what"]):
                 continue
-            # s, p, o = self.stemmer.stem(s), self.stemmer.stem(p), self.stemmer.stem(o)
-            s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
+            s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
+            # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
             s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
             print(s, p, o)
             subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
@@ -89,8 +91,6 @@ class Conversation:
             }}""".format(s, p)
             print(q)
             query_responses.append(g.query(q))
-
-        print(query_responses)
 
         string_responses = []
         for response in query_responses:
@@ -108,18 +108,17 @@ class Conversation:
             SELECT ?p ?o
             WHERE {{
                 agent:{} ?p ?o.
+                FILTER (?p != agent:reference) .
             }}""".format(word)
             print(q_p)
             query_properties[word].append(g.query(q_p))
 
-        complex_responses = ""
+        stem_response = []
         object_type = None
         for key in query_properties:
-            element_properties = ""
             for result in query_properties[key]:
                 for element in result:
                     print(element)
-                    properties = ""
                     if element[-2].split("/")[-1] == "is_a":
                         object_type = element[-1].split("/")[-1]
                         continue
@@ -129,10 +128,27 @@ class Conversation:
                     if property == "null":
                         continue
                     print(property)
-                    element_properties += property + " "
-            complex_responses += element_properties + object_type
+                    stem_response.append(property)
+            stem_response.append(object_type)
 
-        return complex_responses
+        lexical_responses = []
+        for stem in stem_response:
+            q_s = """PREFIX agent: <http://agent.org/>
+            SELECT ?o
+            WHERE {{
+                agent:{} agent:reference ?o.
+            }}""".format(stem)
+            print(q_s)
+            lexical_responses.append(g.query(q_s))
+
+        string_response = ""
+        for response in lexical_responses:
+            for element in response:
+                for triplet in element:
+                    word = triplet.split("/")[-1]
+                    string_response += word + " "
+
+        return string_response[:-1]
 
 
     def reply(self, phrase):
@@ -155,7 +171,6 @@ class Conversation:
         else:
             response = self.wh_query(triplets, g)
 
-        # return response
 
         return response
 
