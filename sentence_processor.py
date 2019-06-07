@@ -8,11 +8,12 @@ from triplet_extractor import TripletExtractor
 
 class SentenceProcessor:
 
-    def __init__(self, phrase):
+    def __init__(self, phrase, no):
         self.nlp = spacy.load('en')
         self.doc = self.nlp(phrase)
         self.sentences = list(self.doc.sents)
         self.triplets = []
+        self.no = no
 
     def find_split_marker_advcl(self, document):
         """ Return markers in case of Adverbial Clause.
@@ -43,7 +44,7 @@ class SentenceProcessor:
 
     def process(self):
         """ Extract all triplets from given phrase """
-        extractor = TripletExtractor()
+        extractor = TripletExtractor(self.no)
 
         for sentence in self.sentences:
             print("Sentence: ", sentence)

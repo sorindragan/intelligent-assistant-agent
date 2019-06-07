@@ -20,7 +20,7 @@ class QuestionProcessor:
 
     def process(self):
         """ Extract all triplets from given phrase """
-        extractor = TripletExtractor()
+        extractor = TripletExtractor(0)
 
         for sentence in self.sentences:
             print("Sentence: ", sentence)

@@ -2,7 +2,7 @@ from sentence_processor import SentenceProcessor
 
 
 def imperative(phrase):
-    sp = SentenceProcessor(phrase)
+    sp = SentenceProcessor(phrase, 0)
     return sp.process()
 
 def test_imperative():

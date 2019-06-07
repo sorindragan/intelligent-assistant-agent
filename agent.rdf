@@ -4,10 +4,10 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 >
   <rdf:Description rdf:about="http://agent.org/computer">
-    <ns1:is rdf:resource="http://agent.org/null"/>
-    <ns1:property rdf:resource="http://agent.org/machine"/>
+    <ns1:is rdf:resource="http://agent.org/at1"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/machine">
+  <rdf:Description rdf:about="http://agent.org/at1">
+    <ns1:is_a rdf:resource="http://agent.org/machine"/>
     <ns1:property rdf:resource="http://agent.org/intelligent"/>
   </rdf:Description>
 </rdf:RDF>
