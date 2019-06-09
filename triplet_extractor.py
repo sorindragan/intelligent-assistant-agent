@@ -217,15 +217,19 @@ class TripletExtractor:
                 self.find_all_conjuncts(nsubject, nsubj_conjuncts)
                 print("NSUBJ_CONJUNCTS: ", nsubj_conjuncts)
 
-            # imperative sentences (no subject)
             elif not pv_subjects:
                 if type == "q":
                     nsubj_conjuncts = [item for item in list(clause)
                                        if item.dep_ == "npadvmod"
                                        ]
+                    nsubj_conjuncts+= [item for item in list(clause)
+                                       if item.text.lower() == "who"
+                                       ]
+                    print("NSUBJ_CONJUNCTS: ", nsubj_conjuncts)
+                # imperative sentences (no subject)
                 else:
                     nsubj_conjuncts = [spacy.load('en')("null")[0]]
-                print("Else subj: ", nsubj_conjuncts)
+                    print("Else subj: ", nsubj_conjuncts)
 
             dobjects = []
             pobjects = []
@@ -290,9 +294,13 @@ class TripletExtractor:
                             if attr_tuples:
                                 for tuple in attr_tuples:
                                     abstract_obj, prop = tuple[0], tuple[1]
+                                    properties = []
+                                    self.find_property(prop, properties)
                                     prop_c = self.verify_compound(prop)
-                                    self.triplets.append((subj_c + subj_idx, pred + particle, abstract_obj))
+                                    for p in properties:
+                                        self.triplets.append((abstract_obj, "property", p.text))
                                     self.triplets.append((abstract_obj, "is_a", prop_c))
+                                    self.triplets.append((subj_c + subj_idx, pred + particle, abstract_obj))
 
                             self.triplets.append((subj_c + subj_idx, pred + particle, dobj_c + dobj_idx))
             if pobjects and not cobjects:
@@ -344,9 +352,13 @@ class TripletExtractor:
                             if attr_tuples:
                                 for tuple in attr_tuples:
                                     abstract_obj, prop = tuple[0], tuple[1]
+                                    properties = []
+                                    self.find_property(prop, properties)
                                     prop_c = self.verify_compound(prop)
-                                    self.triplets.append((subj_c + subj_idx, pred + particle, abstract_obj))
+                                    for p in properties:
+                                        self.triplets.append((abstract_obj, "property", p.text))
                                     self.triplets.append((abstract_obj, "is_a", prop_c))
+                                    self.triplets.append((subj_c + subj_idx, pred + particle, abstract_obj))
 
                             self.triplets.append((subj_c + subj_idx, pred + particle, preposition + pobj_c + pobj_idx))
 
@@ -381,9 +393,13 @@ class TripletExtractor:
                     if attr_tuples:
                         for tuple in attr_tuples:
                             abstract_obj, prop = tuple[0], tuple[1]
+                            properties = []
+                            self.find_property(prop, properties)
                             prop_c = self.verify_compound(prop)
-                            self.triplets.append((subj_c + subj_idx, pred + particle, abstract_obj))
+                            for p in properties:
+                                self.triplets.append((abstract_obj, "property", p.text))
                             self.triplets.append((abstract_obj, "is_a", prop_c))
+                            self.triplets.append((subj_c + subj_idx, pred + particle, abstract_obj))
 
                     self.triplets.append((subj_c + subj_idx, pred + particle, object.text))
 
@@ -435,6 +451,9 @@ class TripletExtractor:
 
                     attr_tuples = []
                     self.check_attr(root, attr_tuples)
+                    if "who" in [item.text.lower() for item in nsubj_conjuncts]:
+                        attr_tuples = filter(lambda t: t[1].text.lower() != "who", attr_tuples)
+                    print(attr_tuples)
                     if attr_tuples:
                         for tuple in attr_tuples:
                             print(tuple)
@@ -445,7 +464,6 @@ class TripletExtractor:
                             for p in properties:
                                 self.triplets.append((abstract_obj, "property", p.text))
                             self.triplets.append((abstract_obj, "is_a", prop_c))
-
                             self.triplets.append((subj_c + subj_idx, pred + particle, abstract_obj))
 
             if not (dobjects or pobjects or cobjects or [item for item in list(clause) if item.dep_ == "attr"]):

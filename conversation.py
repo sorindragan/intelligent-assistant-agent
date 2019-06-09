@@ -2,6 +2,7 @@ from nltk.stem import PorterStemmer, WordNetLemmatizer
 from pprint import pprint
 from rdflib import Graph, Literal, URIRef
 from rdflib import Namespace
+from string import digits
 
 
 from sentence_processor import SentenceProcessor
@@ -70,7 +71,7 @@ class Conversation:
             response = "No."
         return response
 
-    def wh_query(self, triplets, g):
+    def what_query(self, triplets, g):
         query_properties = {}
         query_responses = []
         n = self.n
@@ -150,6 +151,55 @@ class Conversation:
 
         return string_response[:-1]
 
+    def where_when_query(self, triplets, g):
+        query_responses = []
+        n = self.n
+        for triplet in triplets:
+            s, p, o = triplet
+            s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
+            # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
+            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
+            print(s, p, o)
+            subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
+
+            q = """PREFIX agent: <http://agent.org/>
+            SELECT ?o
+            WHERE {{
+                agent:{} agent:{} ?o.
+            }}""".format(s, p)
+            print(q)
+            query_responses.append(g.query(q))
+        stem_responses = []
+        for response in query_responses:
+            for element in response:
+                for triplet in element:
+                    word = triplet.split("/")[-1]
+                    stem_responses.append(word)
+
+        lose_digits = str.maketrans('', '', digits)
+        stem_responses = filter(lambda x: x.translate(lose_digits) != "at", stem_responses)
+        print(stem_responses)
+
+        lexical_responses = []
+        for stem in stem_responses:
+            q_s = """PREFIX agent: <http://agent.org/>
+            SELECT ?o
+            WHERE {{
+                agent:{} agent:reference ?o.
+            }}""".format(stem)
+            print(q_s)
+            lexical_responses.append(g.query(q_s))
+
+        string_response = ""
+        for response in lexical_responses:
+            for element in response:
+                for triplet in element:
+                    word = triplet.split("/")[-1]
+                    word = word.replace("_", " ")
+                    string_response += word + " "
+
+        return string_response[:-1]
+
 
     def reply(self, phrase):
         """ Construct query and interogate RDF Graph based on triplets extracted
@@ -168,9 +218,10 @@ class Conversation:
         # yes/no questions
         if phrase.split()[0].lower() not in wh_list:
             response = self.yes_no_query(triplets, g)
-        else:
-            response = self.wh_query(triplets, g)
-
+        elif phrase.split()[0].lower() == "what":
+            response = self.what_query(triplets, g)
+        elif phrase.split()[0].lower() in ["where", "when"]:
+            response = self.where_when_query(triplets, g)
 
         return response
 
