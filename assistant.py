@@ -25,7 +25,7 @@ def main():
             os.system("mpg123 response.mp3")
 
             print("Bot: ",  response)
-        if response == "Glad we talked!":
+        if response in ["Glad we talked!", "Happy to help!", "Gooodbye!"]:
             break
         print()
 

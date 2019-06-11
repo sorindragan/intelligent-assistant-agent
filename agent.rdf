@@ -3,36 +3,32 @@
    xmlns:ns1="http://agent.org/"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 >
-  <rdf:Description rdf:about="http://agent.org/bowl">
-    <ns1:be rdf:resource="http://agent.org/at1"/>
-    <ns1:reference rdf:resource="http://agent.org/bowl"/>
-    <ns1:be rdf:resource="http://agent.org/from_fath"/>
+  <rdf:Description rdf:about="http://agent.org/love">
+    <ns1:reference rdf:resource="http://agent.org/love"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/from_fath">
-    <ns1:reference rdf:resource="http://agent.org/from_father"/>
+  <rdf:Description rdf:about="http://agent.org/woman">
+    <ns1:properti rdf:resource="http://agent.org/beauti"/>
+    <ns1:reference rdf:resource="http://agent.org/woman"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/beauti">
     <ns1:reference rdf:resource="http://agent.org/beautiful"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/is_a">
-    <ns1:reference rdf:resource="http://agent.org/is_a"/>
+  <rdf:Description rdf:about="http://agent.org/i">
+    <ns1:reference rdf:resource="http://agent.org/i"/>
+    <ns1:like rdf:resource="http://agent.org/girl"/>
+    <ns1:love rdf:resource="http://agent.org/woman"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/gift">
-    <ns1:reference rdf:resource="http://agent.org/gift"/>
+  <rdf:Description rdf:about="http://agent.org/sexi">
+    <ns1:reference rdf:resource="http://agent.org/sexy"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/at1">
-    <ns1:properti rdf:resource="http://agent.org/beauti"/>
-    <ns1:is_a rdf:resource="http://agent.org/gift"/>
-    <ns1:properti rdf:resource="http://agent.org/special"/>
-    <ns1:reference rdf:resource="http://agent.org/at1"/>
+  <rdf:Description rdf:about="http://agent.org/like">
+    <ns1:reference rdf:resource="http://agent.org/like"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/girl">
+    <ns1:properti rdf:resource="http://agent.org/sexi"/>
+    <ns1:reference rdf:resource="http://agent.org/girl"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/properti">
     <ns1:reference rdf:resource="http://agent.org/property"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/special">
-    <ns1:reference rdf:resource="http://agent.org/special"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/be">
-    <ns1:reference rdf:resource="http://agent.org/is"/>
   </rdf:Description>
 </rdf:RDF>

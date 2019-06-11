@@ -3,6 +3,7 @@ from pprint import pprint
 from rdflib import Graph, Literal, URIRef
 from rdflib import Namespace
 from string import digits
+import random
 
 
 from sentence_processor import SentenceProcessor
@@ -52,6 +53,7 @@ class Conversation:
         g.serialize(self.rdf_file)
 
     def yes_no_query(self, triplets, g):
+        lose_digits = str.maketrans('', '', digits)
         query_triplets = []
         n = self.n
         for triplet in triplets:
@@ -66,18 +68,69 @@ class Conversation:
         if all([True if triplet in g else False
                 for triplet in query_triplets
                 ]):
-            response = "Yes."
+            bot_response = "Yes."
         else:
-            response = "No."
-        return response
+            print(query_triplets)
+            bot_response = "Yes."
+            for triplet in query_triplets:
+                s, p, o = triplet
+                s, p, o = s.split("/")[-1], p.split("/")[-1], o.split("/")[-1]
+                if o.translate(lose_digits) == "at":
+                    query_responses = []
+                    q = """PREFIX agent: <http://agent.org/>
+                    SELECT ?o
+                    WHERE {{
+                        agent:{} agent:{} ?o.
+                    }}""".format(s, p)
+                    print(q)
+                    query_responses.append(g.query(q))
 
-    def what_query(self, triplets, g):
+                    string_responses = []
+                    for response in query_responses:
+                        for element in response:
+                            for triplet in element:
+                                word = triplet.split("/")[-1]
+                                string_responses.append(word.translate(lose_digits))
+
+                    print(string_responses)
+                    if "at" not in string_responses:
+                        bot_response = "No."
+                        break
+
+                if s.translate(lose_digits) == "at":
+                    query_responses = []
+                    q = """PREFIX agent: <http://agent.org/>
+                    SELECT ?s
+                    WHERE {{
+                        ?s agent:{} agent:{}.
+                    }}""".format(p, o)
+                    print(q)
+                    query_responses.append(g.query(q))
+
+                    string_responses = []
+                    for response in query_responses:
+                        for element in response:
+                            for triplet in element:
+                                word = triplet.split("/")[-1]
+                                string_responses.append(word.translate(lose_digits))
+
+                    print(string_responses)
+                    if "at" not in string_responses:
+                        bot_response = "No."
+                        break
+
+        return bot_response
+
+    def who_what_query(self, triplets, g):
+        # TODO extract properties for objects that are not abstract
         query_properties = {}
         query_responses = []
         n = self.n
         for triplet in triplets:
             s, p, o = triplet
-            if any([s == "what", o == "what"]):
+            if any([s == "what" and p == "is_a", o == "what" and p == "is_a",
+                    s == "who" and p == "is_a", o == "who" and p == "is_a"
+                    ]):
                 continue
             s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
             # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
@@ -104,17 +157,31 @@ class Conversation:
                     query_properties[word] = []
 
         print(string_responses)
-        for word in string_responses:
-            q_p = """PREFIX agent: <http://agent.org/>
-            SELECT ?p ?o
-            WHERE {{
-                agent:{} ?p ?o.
-                FILTER (?p != agent:reference) .
-            }}""".format(word)
-            print(q_p)
-            query_properties[word].append(g.query(q_p))
-
         stem_response = []
+        for word in string_responses:
+            if word[:2] == "at":
+                q_p = """PREFIX agent: <http://agent.org/>
+                SELECT ?p ?o
+                WHERE {{
+                    agent:{} ?p ?o.
+                    FILTER (?p != agent:reference) .
+                }}""".format(word)
+                print(q_p)
+                query_properties[word].append(g.query(q_p))
+            else:
+                q_s = """PREFIX agent: <http://agent.org/>
+                SELECT ?o
+                WHERE {{
+                    agent:{} agent:properti ?o.
+                }}""".format(word)
+                simple_properties = g.query(q_s)
+                for prop in simple_properties:
+                    for tuple in prop:
+                        stem = tuple.split("/")[-1]
+                        stem_response.append(stem)
+                stem_response.append(word)
+
+
         object_type = None
         for key in query_properties:
             for result in query_properties[key]:
@@ -147,6 +214,7 @@ class Conversation:
             for element in response:
                 for triplet in element:
                     word = triplet.split("/")[-1]
+                    word = word.replace("_", " ")
                     string_response += word + " "
 
         return string_response[:-1]
@@ -218,8 +286,8 @@ class Conversation:
         # yes/no questions
         if phrase.split()[0].lower() not in wh_list:
             response = self.yes_no_query(triplets, g)
-        elif phrase.split()[0].lower() == "what":
-            response = self.what_query(triplets, g)
+        elif phrase.split()[0].lower() in ["who", "what"]:
+            response = self.who_what_query(triplets, g)
         elif phrase.split()[0].lower() in ["where", "when"]:
             response = self.where_when_query(triplets, g)
 
@@ -228,9 +296,9 @@ class Conversation:
     def process(self, phrase):
         bot_reply = ""
         if phrase.lower().strip("!").strip(".") in self.end_sentences:
-            bot_reply = "Glad we talked!"
+            bot_reply = random.choice(["Glad we talked!", "Happy to help!", "Gooodbye!"])
         elif phrase.lower().strip("!").strip(".") in self.greetings:
-            bot_reply = "Hello! What a wonderful day!"
+            bot_reply = random.choice(["Hello! What a wonderful day!", "At your disposal!", "Hi there!"])
         elif ('?' in phrase)  or (phrase.split()[0] in self.wh_list):
             bot_reply = self.reply(phrase + "?")
         else:
