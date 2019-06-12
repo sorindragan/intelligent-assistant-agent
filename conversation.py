@@ -292,6 +292,93 @@ class Conversation:
 
         return string_response[:-1]
 
+    def which_query(self, triplets, g):
+        type_responses = []
+        n = self.n
+        for triplet in triplets:
+            s, p, o = triplet
+            s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
+            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
+            self.debug_dict["which_query"] = (s, p, o)
+            subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
+
+            q = """PREFIX agent: <http://agent.org/>
+            SELECT ?s
+            WHERE {{
+                ?s agent:type agent:{}.
+            }}""".format(s)
+            self.debug_dict["which_q1"] = q
+            type_responses.append(g.query(q))
+
+        stem_responses = []
+        for response in type_responses:
+            for element in response:
+                for triplet in element:
+                    word = triplet.split("/")[-1]
+                    stem_responses.append(word)
+
+        self.debug_dict["types"] = stem_responses
+
+        response_word = None
+        for word in stem_responses:
+            q_2 = """PREFIX agent: <http://agent.org/>
+            SELECT ?o
+            WHERE {{
+                agent:{} agent:{} ?o.
+            }}""".format(word, p)
+            self.debug_dict["which_q2"] = q_2
+            res = g.query(q_2)
+            for tuple in res:
+                for triplet in tuple:
+                    compare_object = triplet.split("/")[-1]
+                    if compare_object:
+                        response_word = word
+
+        self.debug_dict["response_word"] = response_word
+
+        q_3 = """PREFIX agent: <http://agent.org/>
+        SELECT ?o
+        WHERE {{
+            agent:{} agent:reference ?o.
+        }}""".format(response_word)
+        res = g.query(q_3)
+        for org in res:
+            original_word = org[0].split("/")[-1]
+        self.debug_dict["original_word"] = original_word
+
+        stem_properties = []
+        q_4 = """PREFIX agent: <http://agent.org/>
+        SELECT ?o
+        WHERE {{
+            agent:{} agent:properti ?o.
+        }}""".format(response_word)
+        simple_properties = g.query(q_4)
+        for prop in simple_properties:
+            for tuple in prop:
+                stem = tuple.split("/")[-1]
+                stem_properties.append(stem)
+        self.debug_dict["stem_properties"] = stem_properties
+
+        original_properties = []
+        final_response = " "
+        for stem in stem_properties:
+            q_5 = """PREFIX agent: <http://agent.org/>
+            SELECT ?o
+            WHERE {{
+                agent:{} agent:reference ?o.
+            }}""".format(stem)
+            original_properties.append(g.query(q_5))
+
+        for prop in original_properties:
+            for tuple in prop:
+                oword = tuple[0].split("/")[-1]
+                final_response += oword + " "
+
+        self.debug_dict["original_porperties"] = original_properties
+        lose_digits = str.maketrans('', '', digits)
+        final_response += original_word.translate(lose_digits)
+
+        return final_response
 
     def reply(self, phrase):
         """ Construct query and interogate RDF Graph based on triplets extracted
@@ -315,6 +402,8 @@ class Conversation:
             response = self.who_what_query(triplets, g)
         elif phrase.split()[0].lower() in ["where", "when"]:
             response = self.where_when_query(triplets, g)
+        elif phrase.split()[0].lower() == "which":
+            response = self.which_query(triplets, g)
 
         return response
 
