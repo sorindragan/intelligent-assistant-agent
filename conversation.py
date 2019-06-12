@@ -1,10 +1,8 @@
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from pprint import pprint
-from rdflib import Graph, Literal, URIRef
-from rdflib import Namespace
-from string import digits
 import random
-
+from rdflib import Graph, Literal, Namespace, URIRef
+from string import digits
 
 from sentence_processor import SentenceProcessor
 from question_processor import QuestionProcessor
@@ -12,7 +10,7 @@ from question_processor import QuestionProcessor
 
 class Conversation:
 
-    def __init__(self, file="agent.rdf"):
+    def __init__(self, file="agent.rdf", verbose=False):
         self.end_sentences = ["exit", "enough for now", "goodbye", "goodnight",
                               "bye", "that is all", "that's all for now"]
         self.greetings = ["hi", "hello", "hi there", "hello there",
@@ -23,32 +21,55 @@ class Conversation:
         self.g.serialize(self.rdf_file)
         self.stemmer = PorterStemmer()
         self.lemm = WordNetLemmatizer()
-        self.no = 1
         self.wh_list = ["who", "what", "where", "why", "when", "which", "how"]
+        self.verbose = verbose
+        self.no = 1
+        self.debug_dict = {}
 
     def listen(self, phrase):
         """ Construct and update the RDF Graph based on triplets extracted
             during a conversation
         """
-        sentence_processor = SentenceProcessor(phrase, self.no)
+        sentence_processor = SentenceProcessor(phrase, no=self.no, verbose=self.verbose)
         self.no += 1
         triplets = sentence_processor.process()
         g = Graph()
         n = self.n
         g.parse(self.rdf_file, format="xml")
 
+        self.debug_dict["listen_triplets"] = triplets
+        additional_triplets = []
         for triplet in triplets:
             s, p, o = triplet
+            lose_digits = str.maketrans('', '', digits)
+            if s[-1] in digits:
+                type_s, type_p, type_o = (s, "type", s.translate(lose_digits))
+                type_s, type_p, type_o = self.stemmer.stem(type_s), self.stemmer.stem(self.lemm.lemmatize(type_p, 'v')), self.stemmer.stem(type_o)
+                type_s, type_p, type_o = type_s.replace(" ", "_"), type_p.replace(" ", "_"), type_o.replace(" ", "_")
+                type_s, type_p, type_o = URIRef(n + type_s), URIRef(n + type_p), URIRef(n + type_o)
+                additional_triplets.append((type_s, type_p, type_o))
+                g.add((type_s, type_p, type_o))
+            if o[-1] in digits:
+                type_s, type_p, type_o = (o, "type", o.translate(lose_digits))
+                type_s, type_p, type_o = self.stemmer.stem(type_s), self.stemmer.stem(self.lemm.lemmatize(type_p, 'v')), self.stemmer.stem(type_o)
+                type_s, type_p, type_o = type_s.replace(" ", "_"), type_p.replace(" ", "_"), type_o.replace(" ", "_")
+                type_s, type_p, type_o = URIRef(n + type_s), URIRef(n + type_p), URIRef(n + type_o)
+                additional_triplets.append((type_s, type_p, type_o))
+                g.add((type_s, type_p, type_o))
+
             st_s, st_p, st_o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
-            # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
             s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
             st_s, st_p, st_o = st_s.replace(" ", "_"), st_p.replace(" ", "_"), st_o.replace(" ", "_")
-            print((s, p, o), (st_s, st_p, st_o))
             subj, pred, obj = URIRef(n + st_s), URIRef(n + st_p), URIRef(n + st_o)
             g.add((subj, pred, obj))
+            additional_triplets.append((subj, URIRef(n + "reference"), URIRef(n + s)))
+            additional_triplets.append((pred, URIRef(n + "reference"), URIRef(n + p)))
+            additional_triplets.append((obj, URIRef(n + "reference"), URIRef(n + o)))
             g.add((subj, URIRef(n + "reference"), URIRef(n + s)))
             g.add((pred, URIRef(n + "reference"), URIRef(n + p)))
             g.add((obj, URIRef(n + "reference"), URIRef(n + o)))
+
+        self.debug_dict["additional_triplets"] = additional_triplets
 
         g.serialize(self.rdf_file)
 
@@ -56,12 +77,12 @@ class Conversation:
         lose_digits = str.maketrans('', '', digits)
         query_triplets = []
         n = self.n
+        self.debug_dict["yes_no_query"] = triplets
         for triplet in triplets:
             s, p, o = triplet
             s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
             # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
             s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
-            print(s, p, o)
             subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
             query_triplets.append((subj, pred, obj))
 
@@ -70,7 +91,6 @@ class Conversation:
                 ]):
             bot_response = "Yes."
         else:
-            print(query_triplets)
             bot_response = "Yes."
             for triplet in query_triplets:
                 s, p, o = triplet
@@ -82,7 +102,7 @@ class Conversation:
                     WHERE {{
                         agent:{} agent:{} ?o.
                     }}""".format(s, p)
-                    print(q)
+                    self.debug_dict["yes_no_q1"] = q
                     query_responses.append(g.query(q))
 
                     string_responses = []
@@ -92,7 +112,8 @@ class Conversation:
                                 word = triplet.split("/")[-1]
                                 string_responses.append(word.translate(lose_digits))
 
-                    print(string_responses)
+
+                    self.debug_dict["yes_no_string_responses_object"] = string_responses
                     if "at" not in string_responses:
                         bot_response = "No."
                         break
@@ -104,7 +125,7 @@ class Conversation:
                     WHERE {{
                         ?s agent:{} agent:{}.
                     }}""".format(p, o)
-                    print(q)
+                    self.debug_dict["yes_no_q2"] = q
                     query_responses.append(g.query(q))
 
                     string_responses = []
@@ -114,10 +135,13 @@ class Conversation:
                                 word = triplet.split("/")[-1]
                                 string_responses.append(word.translate(lose_digits))
 
-                    print(string_responses)
+                    self.debug_dict["yes_no_string_responses_subject"] = string_responses
                     if "at" not in string_responses:
                         bot_response = "No."
                         break
+
+                if s.translate(lose_digits) != "at" and o.translate(lose_digits) != "at":
+                    bot_response = "No."
 
         return bot_response
 
@@ -135,7 +159,7 @@ class Conversation:
             s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
             # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
             s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
-            print(s, p, o)
+            self.debug_dict["who_what_query"] = (s, p, o)
             subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
 
             q = """PREFIX agent: <http://agent.org/>
@@ -143,7 +167,7 @@ class Conversation:
             WHERE {{
                 agent:{} agent:{} ?o.
             }}""".format(s, p)
-            print(q)
+            self.debug_dict["who_what_q1"] = q
             query_responses.append(g.query(q))
 
         string_responses = []
@@ -156,7 +180,7 @@ class Conversation:
                     string_responses.append(word)
                     query_properties[word] = []
 
-        print(string_responses)
+        self.debug_dict["who_what_string_responses"] = string_responses
         stem_response = []
         for word in string_responses:
             if word[:2] == "at":
@@ -166,7 +190,7 @@ class Conversation:
                     agent:{} ?p ?o.
                     FILTER (?p != agent:reference) .
                 }}""".format(word)
-                print(q_p)
+                self.debug_dict["who_what_q2"] = q_p
                 query_properties[word].append(g.query(q_p))
             else:
                 q_s = """PREFIX agent: <http://agent.org/>
@@ -186,7 +210,7 @@ class Conversation:
         for key in query_properties:
             for result in query_properties[key]:
                 for element in result:
-                    print(element)
+                    self.debug_dict["who_what_inside_query_properties"] = element
                     if element[-2].split("/")[-1] == "is_a":
                         object_type = element[-1].split("/")[-1]
                         continue
@@ -195,7 +219,7 @@ class Conversation:
 
                     if property == "null":
                         continue
-                    print(property)
+                    self.debug_dict["who_what_inside_to_append_propertiy"] = property
                     stem_response.append(property)
             stem_response.append(object_type)
 
@@ -206,7 +230,7 @@ class Conversation:
             WHERE {{
                 agent:{} agent:reference ?o.
             }}""".format(stem)
-            print(q_s)
+            self.debug_dict["who_what_q3"] = q_s
             lexical_responses.append(g.query(q_s))
 
         string_response = ""
@@ -227,7 +251,7 @@ class Conversation:
             s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
             # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
             s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
-            print(s, p, o)
+            self.debug_dict["where_when_query"] = (s, p, o)
             subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
 
             q = """PREFIX agent: <http://agent.org/>
@@ -235,7 +259,7 @@ class Conversation:
             WHERE {{
                 agent:{} agent:{} ?o.
             }}""".format(s, p)
-            print(q)
+            self.debug_dict["where_when_q1"] = q
             query_responses.append(g.query(q))
         stem_responses = []
         for response in query_responses:
@@ -246,7 +270,7 @@ class Conversation:
 
         lose_digits = str.maketrans('', '', digits)
         stem_responses = filter(lambda x: x.translate(lose_digits) != "at", stem_responses)
-        print(stem_responses)
+        self.debug_dict["where_when_stem_responses"] = stem_responses
 
         lexical_responses = []
         for stem in stem_responses:
@@ -255,7 +279,7 @@ class Conversation:
             WHERE {{
                 agent:{} agent:reference ?o.
             }}""".format(stem)
-            print(q_s)
+            self.debug_dict["where_when_q2"] = q
             lexical_responses.append(g.query(q_s))
 
         string_response = ""
@@ -278,7 +302,7 @@ class Conversation:
 
         response = ""
 
-        question_processor = QuestionProcessor(phrase)
+        question_processor = QuestionProcessor(phrase, verbose=self.verbose)
         triplets = question_processor.process()
         wh_list = self.wh_list
         # TODO: costruct queries
@@ -286,6 +310,7 @@ class Conversation:
         # yes/no questions
         if phrase.split()[0].lower() not in wh_list:
             response = self.yes_no_query(triplets, g)
+        # wh quesrions
         elif phrase.split()[0].lower() in ["who", "what"]:
             response = self.who_what_query(triplets, g)
         elif phrase.split()[0].lower() in ["where", "when"]:
@@ -304,5 +329,8 @@ class Conversation:
         else:
             self.listen(phrase)
             bot_reply = "Roger that!"
+
+        if self.verbose:
+            pprint(self.debug_dict)
 
         return bot_reply
