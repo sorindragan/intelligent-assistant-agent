@@ -3,6 +3,12 @@ import sys
 from gtts import gTTS
 
 from conversation import Conversation
+from coref.coref import *
+
+def main():
+    c = Conversation()
+    coref_solver = CorefSolver()
+
 from speech_to_text import SpeechToText
 
 
@@ -49,7 +55,12 @@ def main():
 
         # type
         utterance = str(sys.stdin.readline())
-        response = c.process(utterance[:-1])
+
+        solved_coref, unsolved_coref = coref_solver.solve(utterance[:-1], previous=True, depth=10)
+        if solved_coref == "":
+            solved_coref = utterance[:-1]
+        
+        response = c.process(solved_coref)
 
         if response:
 
