@@ -9,7 +9,6 @@ from speech_to_text import SpeechToText
 
 def main():
     coref_solver = CorefSolver()
-
     verbose = False
     if "--verbose" in sys.argv:
         verbose = True
@@ -33,7 +32,12 @@ def main():
             for u in utterances:
                 print("##################################################")
                 print(u)
-                print(c.process(str(u)[:-1]))
+                solved_coref, unsolved_coref = coref_solver.solve(u[:-1], previous=True, depth=10, verbose=verbose)
+                if solved_coref == "":
+                    solved_coref = u[:-1]
+
+                response = c.process(solved_coref)
+                print(response)
 
     if q_file_name:
         with open(q_file_name, "r") as f:
@@ -41,7 +45,8 @@ def main():
             for q in questions:
                 print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
                 print(q)
-                print(c.process(str(q)[:-1]))
+
+                print(c.process(q))
             return
 
     speech_to_text = SpeechToText()
