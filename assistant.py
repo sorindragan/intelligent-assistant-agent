@@ -4,17 +4,15 @@ from gtts import gTTS
 
 from conversation import Conversation
 from coref.coref import *
-
-def main():
-    c = Conversation()
-    coref_solver = CorefSolver()
-
 from speech_to_text import SpeechToText
 
 
 def main():
+    coref_solver = CorefSolver()
 
+    verbose = False
     if "--verbose" in sys.argv:
+        verbose = True
         c = Conversation(verbose=True)
     else:
         c = Conversation()
@@ -56,11 +54,12 @@ def main():
         # type
         utterance = str(sys.stdin.readline())
 
-        solved_coref, unsolved_coref = coref_solver.solve(utterance[:-1], previous=True, depth=10)
+        solved_coref, unsolved_coref = coref_solver.solve(utterance[:-1], previous=True, depth=10, verbose=verbose)
         if solved_coref == "":
             solved_coref = utterance[:-1]
-        
         response = c.process(solved_coref)
+
+        # response = c.process(utterance[:-1])
 
         if response:
 
