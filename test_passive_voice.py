@@ -2,7 +2,7 @@ from sentence_processor import SentenceProcessor
 
 
 def passive_voice(phrase):
-    sp = SentenceProcessor(phrase)
+    sp = SentenceProcessor(phrase, 0)
     return sp.process()
 
 def test_passive_voice():

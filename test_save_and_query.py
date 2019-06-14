@@ -11,11 +11,12 @@ def rdf_query(file_name):
     g1.parse(file_name, format="xml")
 
     # who outraced the truck ?
+    # outrac is the stem of outraced
     q = """PREFIX agent: <http://agent.org/>
     SELECT ?s
     WHERE {{
         ?s agent:{} agent:{} .
-    }}""".format("outraced", "truck")
+    }}""".format("outrac", "truck")
     print(q)
     responses = g1.query(q)
 
