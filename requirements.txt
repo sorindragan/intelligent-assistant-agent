@@ -12,7 +12,6 @@ cytoolz==0.9.0.1
 decorator==4.4.0
 dill==0.2.9
 docutils==0.14
-en-coref-sm==3.0.0
 idna==2.8
 importlib-metadata==0.17
 ipython==5.5.0
