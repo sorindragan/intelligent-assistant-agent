@@ -4,17 +4,14 @@ from gtts import gTTS
 
 from conversation import Conversation
 from coref.coref import *
-
-def main():
-    c = Conversation()
-    coref_solver = CorefSolver()
-
 from speech_to_text import SpeechToText
 
 
 def main():
-
+    verbose = False
+    coref_solver = CorefSolver()
     if "--verbose" in sys.argv:
+        verbose = True
         c = Conversation(verbose=True)
     else:
         c = Conversation()
@@ -35,7 +32,12 @@ def main():
             for u in utterances:
                 print("##################################################")
                 print(u)
-                print(c.process(str(u)[:-1]))
+                solved_coref, unsolved_coref = coref_solver.solve(u[:-1], previous=True, depth=10, verbose=verbose)
+                if solved_coref == "":
+                    solved_coref = u[:-1]
+
+                response = c.process(solved_coref)
+                print(response)
 
     if q_file_name:
         with open(q_file_name, "r") as f:
@@ -43,7 +45,8 @@ def main():
             for q in questions:
                 print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
                 print(q)
-                print(c.process(str(q)[:-1]))
+                
+                print(c.process(q))
             return
 
     speech_to_text = SpeechToText()
@@ -56,10 +59,11 @@ def main():
         # type
         utterance = str(sys.stdin.readline())
 
-        solved_coref, unsolved_coref = coref_solver.solve(utterance[:-1], previous=True, depth=10)
+        solved_coref, unsolved_coref = coref_solver.solve(utterance[:-1], previous=True, depth=10, verbose=verbose)
         if solved_coref == "":
             solved_coref = utterance[:-1]
-        
+        # print(solved_coref)
+
         response = c.process(solved_coref)
 
         if response:
