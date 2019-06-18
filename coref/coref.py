@@ -58,7 +58,8 @@ class CorefSolver():
         """
         self.doc = None
 
-
+    def add_to_prev(self, conv):
+        self.prev.append(conv)
 
     def unsolved_coref(self):
         """

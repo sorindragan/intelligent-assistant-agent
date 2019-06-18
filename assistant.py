@@ -5,10 +5,11 @@ from gtts import gTTS
 from conversation import Conversation
 from coref.coref import *
 from speech_to_text import SpeechToText
-
+from text_similarity.fail_safe import FailSafe
 
 def main():
     coref_solver = CorefSolver()
+    fail_safe = FailSafe()
     verbose = False
     if "--verbose" in sys.argv:
         verbose = True
@@ -59,7 +60,7 @@ def main():
         # type
         utterance = str(sys.stdin.readline())
 
-        solved_coref, unsolved_coref = coref_solver.solve(utterance[:-1], previous=True, depth=10, verbose=verbose)
+        solved_coref, unsolved_coref = coref_solver.solve(utterance[:-1], previous=True, depth=5, verbose=verbose)
         if solved_coref == "":
             solved_coref = utterance[:-1]
         response = c.process(solved_coref)
@@ -73,8 +74,17 @@ def main():
             os.system("mpg123 response.mp3")
 
             print("Bot: ",  response)
-        if response in ["Glad we talked!", "Happy to help!", "Gooodbye!"]:
-            break
+
+            if response in ["Glad we talked!", "Happy to help!", "Gooodbye!"]:
+                break
+        else:
+            question, response, similarity =  fail_safe.answer_questions(solved_coref)
+            print("Bot: ",  response)
+
+            tts = gTTS(text=response, lang='en')
+            tts.save("response.mp3")
+            os.system("mpg123 response.mp3")
+
         print()
 
 
