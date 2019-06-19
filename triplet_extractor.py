@@ -154,12 +154,16 @@ class TripletExtractor:
             agent = [item
                      for item in list(clause)
                      if item.dep_ == "agent"
-                     ][0]
-
-            self.find_passive_voice_object(agent, pv_subjects)
-            pv_subject = pv_subjects[0]
-            pv_subject_conjuncts = [pv_subject]
-            self.find_all_conjuncts(pv_subject, pv_subject_conjuncts)
+                     ]
+            if agent:
+                agent = agent[0]
+                self.find_passive_voice_object(agent, pv_subjects)
+                pv_subject = pv_subjects[0]
+                pv_subject_conjuncts = [pv_subject]
+                self.find_all_conjuncts(pv_subject, pv_subject_conjuncts)
+            else:
+                agent = "null"
+                pv_subject_conjuncts = []
 
             pv_object = [item
                          for item in list(clause)
@@ -167,6 +171,16 @@ class TripletExtractor:
                          ][0]
             pv_object_conjnucts = [pv_object]
             self.find_all_conjuncts(pv_object, pv_object_conjnucts)
+
+            if not pv_subject_conjuncts:
+                for pv_obj in pv_object_conjnucts:
+                    obj_properties = []
+                    self.find_property(pv_obj, obj_properties)
+                    pv_obj = self.verify_compound(pv_obj)
+                    if obj_properties:
+                        for prop in obj_properties:
+                            self.triplets.append((pv_obj, "property", prop.text))
+                    self.triplets.append((agent, tree_root.text, pv_obj))
 
             for pv_subj, pv_obj in itertools.product(pv_subject_conjuncts, pv_object_conjnucts):
                 subj_properties = []
@@ -419,18 +433,20 @@ class TripletExtractor:
                         preposition = pobj.head.text + " "
                         c_pobj_properties = []
                         self.find_property(pobj, c_pobj_properties)
+                        comp_pobj = self.verify_compound(pobj)
                         for prop in c_pobj_properties:
-                            self.triplets.append((pobj.text, "property", prop.text))
-                        self.triplets.append((c_subj_c, clausal_pred, preposition + pobj.text))
+                            self.triplets.append((comp_pobj, "property", prop.text))
+                        self.triplets.append((c_subj_c, clausal_pred, preposition + comp_pobj))
 
                 if dobjects:
                     self.debug_dict["CWD"] = "Clausal with dobject"
                     for dobj in dobjects:
                         c_dobj_properties = []
                         self.find_property(dobj, c_dobj_properties)
+                        comp_dobj = self.verify_compound(dobj)
                         for prop in c_dobj_properties:
-                            self.triplets.append((dobj.text, "property", prop.text))
-                        self.triplets.append((c_subj_c, clausal_pred, dobj.text))
+                            self.triplets.append((comp_dobj, "property", prop.text))
+                        self.triplets.append((c_subj_c, clausal_pred, comp_dobj))
 
             elif not pobjects and not dobjects:
                 self.debug_dict["CWW"] = "Clausal with other objects"

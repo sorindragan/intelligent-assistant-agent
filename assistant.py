@@ -60,12 +60,12 @@ def main():
         # type
         utterance = str(sys.stdin.readline())
 
-        solved_coref, unsolved_coref = coref_solver.solve(utterance[:-1], previous=True, depth=5, verbose=verbose)
-        if solved_coref == "":
-            solved_coref = utterance[:-1]
-        response = c.process(solved_coref)
+        # solved_coref, unsolved_coref = coref_solver.solve(utterance[:-1], previous=True, depth=5, verbose=verbose)
+        # if solved_coref == "":
+        #     solved_coref = utterance[:-1]
+        # response = c.process(solved_coref)
 
-        # response = c.process(utterance[:-1])
+        response = c.process(utterance[:-1])
 
         if response:
 
@@ -78,12 +78,17 @@ def main():
             if response in ["Glad we talked!", "Happy to help!", "Gooodbye!"]:
                 break
         else:
-            question, response, similarity =  fail_safe.answer_questions(solved_coref)
-            print("Bot: ",  response)
-
+            response = "I don't know that a the moment. Please rephrase or try another question."
             tts = gTTS(text=response, lang='en')
             tts.save("response.mp3")
             os.system("mpg123 response.mp3")
+        # else:
+        #     question, response, similarity =  fail_safe.answer_questions(solved_coref)
+        #     print("Bot: ",  response)
+        #
+        #     tts = gTTS(text=response, lang='en')
+        #     tts.save("response.mp3")
+        #     os.system("mpg123 response.mp3")
 
         print()
 

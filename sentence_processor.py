@@ -56,10 +56,11 @@ class SentenceProcessor:
             # split a sentence in multiple sentences after adverbial clause modifiers
             if "advcl" in [elem.dep_ for elem in list(self.doc)]:
                 split_markers = self.find_split_marker_advcl(self.doc)
-                clauses = re.split(self.create_delimiters(split_markers), sentence.text)
-                clauses = [self.nlp(c) for c in clauses
-                           if c and c not in " ,;" and c not in split_markers
-                           ]
+                if split_markers:        
+                    clauses = re.split(self.create_delimiters(split_markers), sentence.text)
+                    clauses = [self.nlp(c) for c in clauses
+                               if c and c not in " ,;" and c not in split_markers
+                               ]
 
             for clause in clauses:
                 self.debug_dict["Clause"] = clause
