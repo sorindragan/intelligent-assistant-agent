@@ -19,8 +19,9 @@ class TripletExtractor:
         particle = ""
         if root.children:
             for child in root.children:
-                if child.dep_ == "prt":
-                    particle = child.text
+                if child.dep_ != "prt":
+                    continue
+                particle = child.text
         return particle
 
     def check_attr(self, root, concept_objects_props):
@@ -31,9 +32,10 @@ class TripletExtractor:
         """
         if root.children:
             for child in root.children:
-                if child.dep_ == "attr":
-                    concept_objects_props.append(("at" + str(self.concept_object_no), child))
-                    self.concept_object_no += 1
+                if child.dep_ != "attr":
+                    continue
+                concept_objects_props.append(("at" + str(self.concept_object_no), child))
+                self.concept_object_no += 1
 
     def check_predicative_adjectives(self, root):
         """ In case of a nominal predicate
@@ -43,8 +45,9 @@ class TripletExtractor:
         new_root = root.text
         if root.children:
             for child in root.children:
-                if child.dep_ == "acomp":
-                    new_root = child.text
+                if child.dep_ != "acomp":
+                    continue
+                new_root = child.text
         return new_root
 
     def find_property(self, node, descriptions):
@@ -53,8 +56,9 @@ class TripletExtractor:
         """
         if node.children:
             for child in node.children:
-                if child.dep_ == "amod":
-                    descriptions.append(child)
+                if child.dep_ != "amod":
+                    continue
+                descriptions.append(child)
 
     def find_all_conjuncts(self, node, conjuncts_list):
         """ Return list of conjuncts of given node.
@@ -70,8 +74,7 @@ class TripletExtractor:
 
     def find_relative_clause_root(self, clause):
         """ Return Relative Clause root if a Relative Cluase exists. """
-        relcls = [node
-                  for node in list(clause)
+        relcls = [node for node in list(clause)
                   if node.dep_ == "relcl"
                   ]
         if relcls:
@@ -126,16 +129,19 @@ class TripletExtractor:
         compound_text = node.text
         if node.children:
             for child in node.children:
-                if child.dep_ == "compound":
-                    compound_text = child.text + " " + node.text
+                if child.dep_ != "compound":
+                    continue
+                compound_text = child.text + " " + node.text
         return compound_text
 
     def process(self, clause, type):
         """ Extract triplets from a clause """
         tree_root = clause.root
         self.debug_dict["ROOT"] = tree_root
+
         # initial sentence root
         root_conjuncts = [tree_root]
+
         # all predicates in the sentence
         self.find_all_conjuncts(tree_root, root_conjuncts)
         relcl_root = self.find_relative_clause_root(clause)
@@ -148,13 +154,11 @@ class TripletExtractor:
 
         # simple passive voice case
         pv_subjects = []
-        if "nsubjpass" in [item.dep_
-                           for item in list(clause)
-                           ]:
-            agent = [item
-                     for item in list(clause)
+        if "nsubjpass" in [item.dep_ for item in list(clause)]:
+            agent = [item for item in list(clause)
                      if item.dep_ == "agent"
                      ]
+
             if agent:
                 agent = agent[0]
                 self.find_passive_voice_object(agent, pv_subjects)
@@ -165,8 +169,7 @@ class TripletExtractor:
                 agent = "null"
                 pv_subject_conjuncts = []
 
-            pv_object = [item
-                         for item in list(clause)
+            pv_object = [item for item in list(clause)
                          if item.dep_ == "nsubjpass"
                          ][0]
             pv_object_conjnucts = [pv_object]
@@ -212,8 +215,9 @@ class TripletExtractor:
                 next_root = None
 
             particle = self.find_particle(root)
+
             self.debug_dict["CURR_ROOT"] = root
-            self.debug_dict["Deps"] = [(item.text, item.dep_) for item in list(clause)]
+            self.debug_dict["DEPS"] = [(item.text, item.dep_) for item in list(clause)]
 
             nsubj_conjuncts = []
             if "nsubj" in [item.dep_ for item in list(clause)]:
@@ -231,21 +235,23 @@ class TripletExtractor:
 
                 nsubj_conjuncts = [nsubject]
                 self.find_all_conjuncts(nsubject, nsubj_conjuncts)
+
                 self.debug_dict["NSUBJ_CONJUNCTS"] = nsubj_conjuncts
 
-            elif not pv_subjects:
-                if type == "q":
-                    nsubj_conjuncts = [item for item in list(clause)
-                                       if item.dep_ == "npadvmod"
-                                       ]
-                    nsubj_conjuncts+= [item for item in list(clause)
-                                       if item.text.lower() == "who"
-                                       ]
-                    self.debug_dict["NSUBJ_CONJUNCTS_Q"] = nsubj_conjuncts
-                # imperative sentences (no subject)
-                else:
-                    nsubj_conjuncts = [spacy.load('en')("null")[0]]
-                    self.debug_dict["NSUBJ_CONJUNCTS_ELSE"] =  nsubj_conjuncts
+            elif not pv_subjects and type == "q":
+                nsubj_conjuncts = [item for item in list(clause)
+                                   if item.dep_ == "npadvmod"
+                                   ]
+                nsubj_conjuncts+= [item for item in list(clause)
+                                   if item.text.lower() == "who"
+                                   ]
+
+                self.debug_dict["NSUBJ_CONJUNCTS_Q"] = nsubj_conjuncts
+
+            # imperative sentences (no subject)
+            else:
+                nsubj_conjuncts = [spacy.load('en')("null")[0]]
+                self.debug_dict["NSUBJ_CONJUNCTS_ELSE"] =  nsubj_conjuncts
 
             dobjects = []
             pobjects = []
@@ -253,10 +259,9 @@ class TripletExtractor:
             self.find_preposition_objects(root, pobjects, next_root)
 
             # clausal components
-            cobjects = [item
-                      for item in list(clause)
-                      if (item.dep_ == "ccomp" or item.dep_ == "xcomp")
-                      ]
+            cobjects = [item for item in list(clause)
+                        if (item.dep_ == "ccomp" or item.dep_ == "xcomp")
+                        ]
 
             self.debug_dict["DOBJS"] = dobjects
             self.debug_dict["POBJS"] = pobjects
@@ -266,7 +271,9 @@ class TripletExtractor:
                 for dobject in dobjects:
                     dobj_conjuncts = [dobject]
                     self.find_all_conjuncts(dobject, dobj_conjuncts)
+
                     self.debug_dict["DOBJ_CONJUNCTS"] = dobj_conjuncts
+
                     # number instances of objects if they are of the same type
                     counter_subj = Counter([subj.text for subj in nsubj_conjuncts]) \
                                     if nsubj_conjuncts else 0
@@ -319,6 +326,7 @@ class TripletExtractor:
                                     self.triplets.append((subj_c + subj_idx, pred + particle, abstract_obj))
 
                             self.triplets.append((subj_c + subj_idx, pred + particle, dobj_c + dobj_idx))
+
             if pobjects and not cobjects:
                 for pobject in pobjects:
                     pobj_conjuncts = [pobject]

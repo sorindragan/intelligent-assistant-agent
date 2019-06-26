@@ -25,6 +25,7 @@ class QuestionProcessor:
         extractor = TripletExtractor(no = 0, verbose=self.verbose)
         if self.verbose:
             self.display_tree()
+
         for sentence in self.sentences:
             self.debug_dict["Sentence"] = sentence
             self.debug_dict["ROOT"] = sentence.root
@@ -36,6 +37,8 @@ class QuestionProcessor:
         self.triplets = list(set(self.triplets))
         self.triplets.sort()
         self.debug_dict["Question_Triplets"] = self.triplets
+
         if self.verbose:
             pprint(self.debug_dict)
+
         return self.triplets

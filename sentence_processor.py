@@ -47,8 +47,9 @@ class SentenceProcessor:
     def process(self):
         """ Extract all triplets from given phrase """
         extractor = TripletExtractor(no=self.no, verbose=self.verbose)
-        
+
         for sentence in self.sentences:
+
             self.debug_dict["sentence"] = sentence
             self.debug_dict["ROOT"] = sentence.root
 

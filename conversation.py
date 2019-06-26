@@ -29,12 +29,18 @@ class Conversation:
         self.no = 1
         self.debug_dict = {}
 
+    def words_to_URIs(self, triplet):
+        s, p, o = triplet
+        s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
+        s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
+        subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
+        return (subj, pred, obj)
+
     def listen(self, phrase):
         """ Construct and update the RDF Graph based on triplets extracted
             during a conversation
         """
         sentence_processor = SentenceProcessor(phrase, no=self.no, verbose=self.verbose)
-        # sentence_processor.display_tree()
         self.no += 1
         triplets = sentence_processor.process()
         g = Graph()
@@ -47,25 +53,17 @@ class Conversation:
             s, p, o = triplet
             lose_digits = str.maketrans('', '', digits)
             if s[-1] in digits:
-                type_s, type_p, type_o = (s, "type", s.translate(lose_digits))
-                type_s, type_p, type_o = self.stemmer.stem(type_s), self.stemmer.stem(self.lemm.lemmatize(type_p, 'v')), self.stemmer.stem(type_o)
-                type_s, type_p, type_o = type_s.replace(" ", "_"), type_p.replace(" ", "_"), type_o.replace(" ", "_")
-                type_s, type_p, type_o = URIRef(n + type_s), URIRef(n + type_p), URIRef(n + type_o)
-                additional_triplets.append((type_s, type_p, type_o))
-                g.add((type_s, type_p, type_o))
+                new_triplet = self.words_to_URIs((s, "type", s.translate(lose_digits)))
+                additional_triplets.append(new_triplet)
+                g.add(new_triplet)
             if o[-1] in digits:
-                type_s, type_p, type_o = (o, "type", o.translate(lose_digits))
-                type_s, type_p, type_o = self.stemmer.stem(type_s), self.stemmer.stem(self.lemm.lemmatize(type_p, 'v')), self.stemmer.stem(type_o)
-                type_s, type_p, type_o = type_s.replace(" ", "_"), type_p.replace(" ", "_"), type_o.replace(" ", "_")
-                type_s, type_p, type_o = URIRef(n + type_s), URIRef(n + type_p), URIRef(n + type_o)
-                additional_triplets.append((type_s, type_p, type_o))
-                g.add((type_s, type_p, type_o))
+                new_triplet = self.words_to_URIs((o, "type", o.translate(lose_digits)))
+                additional_triplets.append(new_triplet)
+                g.add(new_triplet)
 
-            st_s, st_p, st_o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
-            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
-            st_s, st_p, st_o = st_s.replace(" ", "_"), st_p.replace(" ", "_"), st_o.replace(" ", "_")
-            subj, pred, obj = URIRef(n + st_s), URIRef(n + st_p), URIRef(n + st_o)
+            subj, pred, obj = self.words_to_URIs(triplet)
             g.add((subj, pred, obj))
+
             additional_triplets.append((subj, URIRef(n + "reference"), URIRef(n + s)))
             additional_triplets.append((pred, URIRef(n + "reference"), URIRef(n + p)))
             additional_triplets.append((obj, URIRef(n + "reference"), URIRef(n + o)))
@@ -86,13 +84,7 @@ class Conversation:
             return "Spacy could not create the dependency tree correctly for this question."
 
         for triplet in triplets:
-            s, p, o = triplet
-            s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
-            # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
-            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
-            subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
-            query_triplets.append((subj, pred, obj))
-
+            query_triplets.append(self.words_to_URIs(triplet))
 
         if all([True if triplet in g else False
                 for triplet in query_triplets
@@ -110,20 +102,20 @@ class Conversation:
                     WHERE {{
                         agent:{} agent:{} ?o.
                     }}""".format(s, p)
-                    self.debug_dict["yes_no_q1"] = q
                     query_responses.append(g.query(q))
 
-                    string_responses = []
-                    for response in query_responses:
-                        for element in response:
-                            for triplet in element:
-                                word = triplet.split("/")[-1]
-                                string_responses.append(word.translate(lose_digits))
+                    self.debug_dict["yes_no_q1"] = q
 
+                    string_responses = [word.split("/")[-1].translate(lose_digits)
+                                        for response in query_responses
+                                        for element in response
+                                        for word in element
+                                        ]
 
                     self.debug_dict["yes_no_string_responses_object"] = string_responses
+
                     if "at" not in string_responses:
-                        bot_response = ""
+                        bot_response = "No, or I don't know that yet.+"
                         break
 
                 if s.translate(lose_digits) == "at":
@@ -133,23 +125,22 @@ class Conversation:
                     WHERE {{
                         ?s agent:{} agent:{}.
                     }}""".format(p, o)
-                    self.debug_dict["yes_no_q2"] = q
                     query_responses.append(g.query(q))
+                    self.debug_dict["yes_no_q2"] = q
 
-                    string_responses = []
-                    for response in query_responses:
-                        for element in response:
-                            for triplet in element:
-                                word = triplet.split("/")[-1]
-                                string_responses.append(word.translate(lose_digits))
+                    string_responses = [word.split("/")[-1].translate(lose_digits)
+                                        for response in query_responses
+                                        for element in response
+                                        for word in element
+                                        ]
 
                     self.debug_dict["yes_no_string_responses_subject"] = string_responses
                     if "at" not in string_responses:
-                        bot_response = ""
+                        bot_response = "No, or I don't know that yet.+"
                         break
 
                 if s.translate(lose_digits) != "at" and o.translate(lose_digits) != "at":
-                    bot_response = ""
+                    bot_response = "No, or I don't know that yet.+"
 
         return bot_response
 
@@ -164,29 +155,26 @@ class Conversation:
                     s == "who" and p == "is_a", o == "who" and p == "is_a"
                     ]):
                 continue
-            s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
-            # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
-            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
-            self.debug_dict["who_what_query"] = (s, p, o)
-            subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
+
+            subj, pred, obj = self.words_to_URIs(triplet)
 
             q = """PREFIX agent: <http://agent.org/>
             SELECT ?o
             WHERE {{
                 agent:{} agent:{} ?o.
             }}""".format(s, p)
-            self.debug_dict["who_what_q1"] = q
             query_responses.append(g.query(q))
+            self.debug_dict["who_what_q1"] = q
 
-        string_responses = []
-        for response in query_responses:
-            for element in response:
-                for triplet in element:
-                    word = triplet.split("/")[-1]
-                    if word == "null":
-                        continue
-                    string_responses.append(word)
-                    query_properties[word] = []
+
+        string_responses = [word.split("/")[-1].translate(lose_digits)
+                            for response in query_responses
+                            for element in response
+                            for word in element
+                            if word.split("/")[-1] != "null"
+                            ]
+        for word in string_responses:
+            query_properties[word] = []
 
         self.debug_dict["who_what_string_responses"] = string_responses
         stem_response = []
@@ -199,8 +187,8 @@ class Conversation:
                     agent:{} ?p ?o.
                     FILTER (?p != agent:reference) .
                 }}""".format(word)
-                self.debug_dict["who_what_q2"] = q_p
                 query_properties[word].append(g.query(q_p))
+                self.debug_dict["who_what_q2"] = q_p
             else:
                 q_s = """PREFIX agent: <http://agent.org/>
                 SELECT ?o
@@ -256,25 +244,21 @@ class Conversation:
         n = self.n
         for triplet in triplets:
             s, p, o = triplet
-            s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
-            # s, p, o = self.lemm.lemmatize(s), self.lemm.lemmatize(p), self.lemm.lemmatize(o)
-            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
-            self.debug_dict["where_when_query"] = (s, p, o)
-            subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
+            subj, pred, obj = self.words_to_URIs(triplet)
 
             q = """PREFIX agent: <http://agent.org/>
             SELECT ?o
             WHERE {{
                 agent:{} agent:{} ?o.
             }}""".format(s, p)
-            self.debug_dict["where_when_q1"] = q
             query_responses.append(g.query(q))
-        stem_responses = []
-        for response in query_responses:
-            for element in response:
-                for triplet in element:
-                    word = triplet.split("/")[-1]
-                    stem_responses.append(word)
+            self.debug_dict["where_when_q1"] = q
+
+        stem_responses = [word.split("/")[-1].translate(lose_digits)
+                          for response in query_responses
+                          for element in response
+                          for word in element
+                          ]
 
         lose_digits = str.maketrans('', '', digits)
         stem_responses = filter(lambda x: x.translate(lose_digits) != "at", stem_responses)
@@ -306,10 +290,7 @@ class Conversation:
         original_word = None
         for triplet in triplets:
             s, p, o = triplet
-            s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
-            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
-            self.debug_dict["which_query"] = (s, p, o)
-            subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
+            subj, pred, obj = self.words_to_URIs(triplet)
 
             q = """PREFIX agent: <http://agent.org/>
             SELECT ?s
@@ -319,12 +300,11 @@ class Conversation:
             self.debug_dict["which_q1"] = q
             type_responses.append(g.query(q))
 
-        stem_responses = []
-        for response in type_responses:
-            for element in response:
-                for triplet in element:
-                    word = triplet.split("/")[-1]
-                    stem_responses.append(word)
+        stem_responses = [word.split("/")[-1].translate(lose_digits)
+                          for response in query_responses
+                          for element in response
+                          for word in element
+                          ]
 
         self.debug_dict["types"] = stem_responses
 
@@ -401,8 +381,6 @@ class Conversation:
 
         question_processor = QuestionProcessor(phrase, verbose=self.verbose)
         triplets = question_processor.process()
-        wh_list = self.wh_list
-        # TODO: costruct queries
 
         # yes/no questions
         if phrase.split()[0].lower() in self.yes_no_list:
