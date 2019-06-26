@@ -12,7 +12,6 @@ PyAudio==0.2.11
 pyparsing==2.3.0
 pyRFC3339==1.0
 pytest==4.4.1
-python-apt==1.6.4
 pyttsx3==2.71
 rdflib==4.2.2
 regex==2018.1.10
