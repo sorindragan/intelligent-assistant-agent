@@ -36,9 +36,9 @@ def main():
                 solved_coref, unsolved_coref = coref_solver.solve(u[:-1], previous=True, depth=10, verbose=verbose)
                 if solved_coref == "":
                     solved_coref = u[:-1]
-                # print("***********")
-                # print(solved_coref)
-                # print("***********")
+                print("***********")
+                print(solved_coref)
+                print("***********")
                 response = c.process(solved_coref.strip())
                 print(response)
 
@@ -71,7 +71,7 @@ def main():
         else:
             utterance = utterance[:-1]
 
-        solved_coref, unsolved_coref = coref_solver.solve(utterance, previous=True, depth=5, verbose=verbose)
+        solved_coref, unsolved_coref = coref_solver.solve(utterance, previous=True, depth=5, verbose=True)
         if solved_coref == "":
             solved_coref = utterance
         response = c.process(solved_coref.strip())

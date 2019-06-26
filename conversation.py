@@ -427,7 +427,7 @@ class Conversation:
         elif ('?' in phrase)  or (phrase.split()[0] in self.wh_list + self.yes_no_list):
             bot_reply = self.reply(phrase + "?")
         else:
-            self.listen(phrase)
+            self.listen(phrase + ".")
             bot_reply = "Roger that!"
 
         if self.verbose:
