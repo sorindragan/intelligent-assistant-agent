@@ -78,6 +78,9 @@ class Conversation:
         query_triplets = []
         n = self.n
         self.debug_dict["yes_no_query"] = triplets
+        if not triplets:
+            return "Spacy could not create the dependency tree correctly for this question."
+
         for triplet in triplets:
             s, p, o = triplet
             s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
@@ -85,6 +88,7 @@ class Conversation:
             s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
             subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
             query_triplets.append((subj, pred, obj))
+
 
         if all([True if triplet in g else False
                 for triplet in query_triplets
@@ -115,7 +119,7 @@ class Conversation:
 
                     self.debug_dict["yes_no_string_responses_object"] = string_responses
                     if "at" not in string_responses:
-                        bot_response = "No."
+                        bot_response = "No, or maybe I don't know that yet"
                         break
 
                 if s.translate(lose_digits) == "at":
@@ -137,11 +141,11 @@ class Conversation:
 
                     self.debug_dict["yes_no_string_responses_subject"] = string_responses
                     if "at" not in string_responses:
-                        bot_response = "No."
+                        bot_response = "No, or maybe I don't know that yet"
                         break
 
                 if s.translate(lose_digits) != "at" and o.translate(lose_digits) != "at":
-                    bot_response = "No."
+                    bot_response = "No, or maybe I don't know that yet"
 
         return bot_response
 
@@ -182,7 +186,8 @@ class Conversation:
 
         self.debug_dict["who_what_string_responses"] = string_responses
         stem_response = []
-        for word in string_responses:
+        stem_response2 = []
+        for word in list(set(string_responses)):
             if word[:2] == "at":
                 q_p = """PREFIX agent: <http://agent.org/>
                 SELECT ?p ?o
@@ -202,9 +207,8 @@ class Conversation:
                 for prop in simple_properties:
                     for tuple in prop:
                         stem = tuple.split("/")[-1]
-                        stem_response.append(stem)
-                stem_response.append(word)
-
+                        stem_response2.append(stem)
+                stem_response2.append(word)
 
         object_type = None
         for key in query_properties:
@@ -224,7 +228,7 @@ class Conversation:
             stem_response.append(object_type)
 
         lexical_responses = []
-        for stem in stem_response:
+        for stem in list(set(stem_response + stem_response2)):
             q_s = """PREFIX agent: <http://agent.org/>
             SELECT ?o
             WHERE {{
@@ -273,7 +277,7 @@ class Conversation:
         self.debug_dict["where_when_stem_responses"] = stem_responses
 
         lexical_responses = []
-        for stem in stem_responses:
+        for stem in list(set(stem_responses)):
             q_s = """PREFIX agent: <http://agent.org/>
             SELECT ?o
             WHERE {{
