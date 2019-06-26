@@ -47,7 +47,7 @@ class SentenceProcessor:
     def process(self):
         """ Extract all triplets from given phrase """
         extractor = TripletExtractor(no=self.no, verbose=self.verbose)
-
+        
         for sentence in self.sentences:
             self.debug_dict["sentence"] = sentence
             self.debug_dict["ROOT"] = sentence.root
@@ -56,7 +56,7 @@ class SentenceProcessor:
             # split a sentence in multiple sentences after adverbial clause modifiers
             if "advcl" in [elem.dep_ for elem in list(self.doc)]:
                 split_markers = self.find_split_marker_advcl(self.doc)
-                if split_markers:        
+                if split_markers:
                     clauses = re.split(self.create_delimiters(split_markers), sentence.text)
                     clauses = [self.nlp(c) for c in clauses
                                if c and c not in " ,;" and c not in split_markers

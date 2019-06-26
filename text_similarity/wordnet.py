@@ -78,6 +78,8 @@ class WordNetSimilarity:
     def sentence_similarity(self, sentence1, sentence2):
         """ compute the sentence similarity using Wordnet """
 
+        if sentence1.lower() == sentence2.lower():
+            return 2
         # Tokenize and tag
         sentence1 = pos_tag(word_tokenize(sentence1.lower()))
         sentence2 = pos_tag(word_tokenize(sentence2.lower()))

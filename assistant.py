@@ -36,8 +36,10 @@ def main():
                 solved_coref, unsolved_coref = coref_solver.solve(u[:-1], previous=True, depth=10, verbose=verbose)
                 if solved_coref == "":
                     solved_coref = u[:-1]
-
-                response = c.process(solved_coref)
+                # print("***********")
+                # print(solved_coref)
+                # print("***********")
+                response = c.process(solved_coref.strip())
                 print(response)
 
     if q_file_name:
@@ -46,8 +48,10 @@ def main():
             for q in questions:
                 print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
                 print(q)
-
-                print(c.process(q))
+                response = c.process(q)
+                if not response:
+                    question, response, similarity =  fail_safe.answer_questions(solved_coref)
+                print("Bot: ",  response)
             return
 
     speech_to_text = SpeechToText()
@@ -58,14 +62,21 @@ def main():
         # response = c.process(utterance)
 
         # type
+        print("Write Something or press V for voice input: ", end='', flush=True)
         utterance = str(sys.stdin.readline())
 
-        # solved_coref, unsolved_coref = coref_solver.solve(utterance[:-1], previous=True, depth=5, verbose=verbose)
-        # if solved_coref == "":
-        #     solved_coref = utterance[:-1]
-        # response = c.process(solved_coref)
+        if utterance[:-1].lower() == "v":
+            utterance = speech_to_text.process()
+            print(utterance)
+        else:
+            utterance = utterance[:-1]
 
-        response = c.process(utterance[:-1])
+        solved_coref, unsolved_coref = coref_solver.solve(utterance, previous=True, depth=5, verbose=verbose)
+        if solved_coref == "":
+            solved_coref = utterance
+        response = c.process(solved_coref.strip())
+
+        # response = c.process(utterance[:-1])
 
         if response:
 
@@ -77,18 +88,18 @@ def main():
 
             if response in ["Glad we talked!", "Happy to help!", "Gooodbye!"]:
                 break
-        else:
-            response = "I don't know that a the moment. Please rephrase or try another question."
-            tts = gTTS(text=response, lang='en')
-            tts.save("response.mp3")
-            os.system("mpg123 response.mp3")
         # else:
-        #     question, response, similarity =  fail_safe.answer_questions(solved_coref)
-        #     print("Bot: ",  response)
-        #
+        #     response = "I don't know that a the moment. Please rephrase or try another question."
         #     tts = gTTS(text=response, lang='en')
         #     tts.save("response.mp3")
         #     os.system("mpg123 response.mp3")
+        else:
+            question, response, similarity =  fail_safe.answer_questions(solved_coref)
+            print("Bot: ",  response)
+
+            tts = gTTS(text=response, lang='en')
+            tts.save("response.mp3")
+            os.system("mpg123 response.mp3")
 
         print()
 

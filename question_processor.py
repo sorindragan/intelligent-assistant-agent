@@ -23,7 +23,8 @@ class QuestionProcessor:
     def process(self):
         """ Extract all triplets from given phrase """
         extractor = TripletExtractor(no = 0, verbose=self.verbose)
-
+        if self.verbose:
+            self.display_tree()
         for sentence in self.sentences:
             self.debug_dict["Sentence"] = sentence
             self.debug_dict["ROOT"] = sentence.root

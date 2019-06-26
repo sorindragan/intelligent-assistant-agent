@@ -23,7 +23,7 @@ class SpeechToText:
 
         	try:
         		text = self.r.recognize_google(audio)
-        		print("You: ", text)
+        		print(text)
 
         	except sr.UnknownValueError:
         		print("Google Speech Recognition could not understand what you said")

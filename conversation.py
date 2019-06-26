@@ -22,6 +22,9 @@ class Conversation:
         self.stemmer = PorterStemmer()
         self.lemm = WordNetLemmatizer()
         self.wh_list = ["who", "what", "where", "why", "when", "which", "how"]
+        self.yes_no_list = ["is", "are", "am", "will", "could", "would", "may",
+                            "can", "have", "has", "had", "did", "do", "does",
+                            ]
         self.verbose = verbose
         self.no = 1
         self.debug_dict = {}
@@ -31,6 +34,7 @@ class Conversation:
             during a conversation
         """
         sentence_processor = SentenceProcessor(phrase, no=self.no, verbose=self.verbose)
+        # sentence_processor.display_tree()
         self.no += 1
         triplets = sentence_processor.process()
         g = Graph()
@@ -119,7 +123,7 @@ class Conversation:
 
                     self.debug_dict["yes_no_string_responses_object"] = string_responses
                     if "at" not in string_responses:
-                        bot_response = "No, or maybe I don't know that yet"
+                        bot_response = ""
                         break
 
                 if s.translate(lose_digits) == "at":
@@ -141,11 +145,11 @@ class Conversation:
 
                     self.debug_dict["yes_no_string_responses_subject"] = string_responses
                     if "at" not in string_responses:
-                        bot_response = "No, or maybe I don't know that yet"
+                        bot_response = ""
                         break
 
                 if s.translate(lose_digits) != "at" and o.translate(lose_digits) != "at":
-                    bot_response = "No, or maybe I don't know that yet"
+                    bot_response = ""
 
         return bot_response
 
@@ -299,6 +303,7 @@ class Conversation:
     def which_query(self, triplets, g):
         type_responses = []
         n = self.n
+        original_word = None
         for triplet in triplets:
             s, p, o = triplet
             s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
@@ -348,7 +353,7 @@ class Conversation:
         res = g.query(q_3)
         for org in res:
             original_word = org[0].split("/")[-1]
-        self.debug_dict["original_word"] = original_word
+            self.debug_dict["original_word"] = original_word
 
         stem_properties = []
         q_4 = """PREFIX agent: <http://agent.org/>
@@ -380,7 +385,8 @@ class Conversation:
 
         self.debug_dict["original_porperties"] = original_properties
         lose_digits = str.maketrans('', '', digits)
-        final_response += original_word.translate(lose_digits)
+        if original_word:
+            final_response += original_word.translate(lose_digits)
 
         return final_response
 
@@ -399,7 +405,7 @@ class Conversation:
         # TODO: costruct queries
 
         # yes/no questions
-        if phrase.split()[0].lower() not in wh_list:
+        if phrase.split()[0].lower() in self.yes_no_list:
             response = self.yes_no_query(triplets, g)
         # wh quesrions
         elif phrase.split()[0].lower() in ["who", "what"]:
@@ -413,11 +419,12 @@ class Conversation:
 
     def process(self, phrase):
         bot_reply = ""
+        # print(phrase)
         if phrase.lower().strip("!").strip(".") in self.end_sentences:
             bot_reply = random.choice(["Glad we talked!", "Happy to help!", "Gooodbye!"])
         elif phrase.lower().strip("!").strip(".") in self.greetings:
             bot_reply = random.choice(["Hello! What a wonderful day!", "At your disposal!", "Hi there!"])
-        elif ('?' in phrase)  or (phrase.split()[0] in self.wh_list):
+        elif ('?' in phrase)  or (phrase.split()[0] in self.wh_list + self.yes_no_list):
             bot_reply = self.reply(phrase + "?")
         else:
             self.listen(phrase)
