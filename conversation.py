@@ -141,10 +141,10 @@ class Conversation:
         return bot_response
 
     def who_what_query(self, triplets, g):
-        # TODO extract properties for objects that are not abstract
         query_properties = {}
         query_responses = []
         n = self.n
+        self.debug_dict["WHO_WHAT_triplets"] = triplets
         for triplet in triplets:
             s, p, o = triplet
             if any([s == "what" and p == "is_a", o == "what" and p == "is_a",
@@ -161,8 +161,7 @@ class Conversation:
             query_responses.append(g.query(q))
             self.debug_dict["who_what_q1"] = q
 
-
-        string_responses = [word.split("/")[-1].translate(self.lose_digits)
+        string_responses = [word.split("/")[-1]
                             for response in query_responses
                             for element in response
                             for word in element
@@ -172,6 +171,7 @@ class Conversation:
             query_properties[word] = []
 
         self.debug_dict["who_what_string_responses"] = string_responses
+
         stem_response = []
         stem_response2 = []
         for word in list(set(string_responses)):
@@ -249,7 +249,7 @@ class Conversation:
             query_responses.append(g.query(q))
             self.debug_dict["where_when_q1"] = q
 
-        stem_responses = [word.split("/")[-1].translate(self.lose_digits)
+        stem_responses = [word.split("/")[-1]
                           for response in query_responses
                           for element in response
                           for word in element
@@ -294,7 +294,7 @@ class Conversation:
             self.debug_dict["which_q1"] = q
             type_responses.append(g.query(q))
 
-        stem_responses = [word.split("/")[-1].translate(self.lose_digits)
+        stem_responses = [word.split("/")[-1]
                           for response in type_responses
                           for element in response
                           for word in element
