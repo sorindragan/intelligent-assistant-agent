@@ -29,25 +29,27 @@ class UtteranceBranching:
         elif phrase.lower().strip("!").strip(".") in self.greetings:
             bot_reply = random.choice(self.greetings_replies)
         elif ('?' in phrase)  or (phrase.split()[0] in self.wh_list + self.yes_no_list):
-            solved_coref, unsolved_coref = self.coref_solver.solve(phrase[:-1] + "?",
-                                                                   previous=True,
-                                                                   depth=2,
-                                                                   verbose=self.verbose
-                                                                   )
-            if solved_coref == "":
-                solved_coref = phrase[:-1] + "?"
+            # solved_coref, unsolved_coref = self.coref_solver.solve(phrase[:-1] + "?",
+            #                                                        previous=True,
+            #                                                        depth=2,
+            #                                                        verbose=self.verbose
+            #                                                        )
+            # if solved_coref == "":
+            #     solved_coref = phrase[:-1] + "?"
+            solved_coref = phrase[:-1] + "?"
             bot_reply = self.c.reply(solved_coref.strip())
         else:
-            solved_coref, unsolved_coref = self.coref_solver.solve(phrase[:-1] + ".",
-                                                                   previous=True,
-                                                                   depth=4,
-                                                                   verbose=self.verbose
-                                                                   )
-            if solved_coref == "":
-                solved_coref = phrase[:-1] + "."
-            print("***********")
-            print(solved_coref)
-            print("***********")
+            # solved_coref, unsolved_coref = self.coref_solver.solve(phrase[:-1] + ".",
+            #                                                        previous=True,
+            #                                                        depth=4,
+            #                                                        verbose=self.verbose
+            #                                                        )
+            # if solved_coref == "":
+            #     solved_coref = phrase[:-1] + "."
+            # print("***********")
+            # print(solved_coref)
+            # print("***********")
+            solved_coref = phrase[:-1] + "."
             self.c.listen(solved_coref.strip())
             bot_reply = "Roger that!"
 

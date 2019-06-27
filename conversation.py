@@ -296,7 +296,7 @@ class Conversation:
             type_responses.append(g.query(q))
 
         stem_responses = [word.split("/")[-1].translate(self.lose_digits)
-                          for response in query_responses
+                          for response in type_responses
                           for element in response
                           for word in element
                           ]
