@@ -161,7 +161,6 @@ class Conversation:
             query_responses.append(g.query(q))
             self.debug_dict["who_what_q1"] = q
 
-
         string_responses = [word.split("/")[-1]
                             for response in query_responses
                             for element in response
@@ -199,7 +198,6 @@ class Conversation:
                 stem_response2.append(word)
 
         object_type = None
-        print(query_properties)
         for key in query_properties:
             for result in query_properties[key]:
                 for element in result:
