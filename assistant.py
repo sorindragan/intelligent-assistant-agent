@@ -2,7 +2,7 @@ import os
 import sys
 from gtts import gTTS
 
-from conversation import Conversation
+from utterance_branching import UtteranceBranching
 from coref.coref import *
 from speech_to_text import SpeechToText
 from text_similarity.fail_safe import FailSafe
@@ -13,9 +13,9 @@ def main():
     verbose = False
     if "--verbose" in sys.argv:
         verbose = True
-        c = Conversation(verbose=True)
+        u = UtteranceBranching(verbose=True)
     else:
-        c = Conversation()
+        u = UtteranceBranching()
 
     kb_file_name = None
     if "--kb" in sys.argv:
@@ -39,7 +39,7 @@ def main():
                 print("***********")
                 print(solved_coref)
                 print("***********")
-                response = c.process(solved_coref.strip())
+                response = u.process(solved_coref.strip())
                 print(response)
 
     if q_file_name:
@@ -48,7 +48,7 @@ def main():
             for q in questions:
                 print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
                 print(q)
-                response = c.process(q)
+                response = u.process(q)
                 if not response:
                     question, response, similarity =  fail_safe.answer_questions(solved_coref)
                 print("Bot: ",  response)
@@ -57,11 +57,8 @@ def main():
     speech_to_text = SpeechToText()
 
     while True:
-        # say
-        # utterance = speech_to_text.process()
-        # response = c.process(utterance)
 
-        # type
+        # type or say
         print("Write Something or press V for voice input: ", end='', flush=True)
         utterance = str(sys.stdin.readline())
 
@@ -74,7 +71,7 @@ def main():
         solved_coref, unsolved_coref = coref_solver.solve(utterance, previous=True, depth=5, verbose=True)
         if solved_coref == "":
             solved_coref = utterance
-        response = c.process(solved_coref.strip())
+        response = u.process(solved_coref.strip())
 
         # response = c.process(utterance[:-1])
 
@@ -88,11 +85,7 @@ def main():
 
             if response in ["Glad we talked!", "Happy to help!", "Gooodbye!"]:
                 break
-        # else:
-        #     response = "I don't know that a the moment. Please rephrase or try another question."
-        #     tts = gTTS(text=response, lang='en')
-        #     tts.save("response.mp3")
-        #     os.system("mpg123 response.mp3")
+
         else:
             question, response, similarity =  fail_safe.answer_questions(solved_coref)
             print("Bot: ",  response)

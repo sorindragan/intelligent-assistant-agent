@@ -1,6 +1,5 @@
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from pprint import pprint
-import random
 from rdflib import Graph, Literal, Namespace, URIRef
 from string import digits
 
@@ -11,10 +10,6 @@ from question_processor import QuestionProcessor
 class Conversation:
 
     def __init__(self, file="agent.rdf", verbose=False):
-        self.end_sentences = ["exit", "enough for now", "goodbye", "goodnight",
-                              "bye", "that is all", "that's all for now"]
-        self.greetings = ["hi", "hello", "hi there", "hello there",
-                          "good morning", "good afternoon", "hey"]
         self.rdf_file = file
         self.g = Graph()
         self.n = Namespace("http://agent.org/")
@@ -395,20 +390,5 @@ class Conversation:
 
         return response
 
-    def process(self, phrase):
-        bot_reply = ""
-        # print(phrase)
-        if phrase.lower().strip("!").strip(".") in self.end_sentences:
-            bot_reply = random.choice(["Glad we talked!", "Happy to help!", "Gooodbye!"])
-        elif phrase.lower().strip("!").strip(".") in self.greetings:
-            bot_reply = random.choice(["Hello! What a wonderful day!", "At your disposal!", "Hi there!"])
-        elif ('?' in phrase)  or (phrase.split()[0] in self.wh_list + self.yes_no_list):
-            bot_reply = self.reply(phrase + "?")
-        else:
-            self.listen(phrase + ".")
-            bot_reply = "Roger that!"
-
-        if self.verbose:
-            pprint(self.debug_dict)
-
-        return bot_reply
+    def debug(self):
+        return self.debug_dict
