@@ -60,7 +60,7 @@ class Conversation:
 
             subj, pred, obj = self.words_to_URIs(triplet)
             g.add((subj, pred, obj))
-
+            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
             additional_triplets.append((subj, URIRef(n + "reference"), URIRef(n + s)))
             additional_triplets.append((pred, URIRef(n + "reference"), URIRef(n + p)))
             additional_triplets.append((obj, URIRef(n + "reference"), URIRef(n + o)))
