@@ -3,39 +3,29 @@
    xmlns:ns1="http://agent.org/"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 >
-  <rdf:Description rdf:about="http://agent.org/andreea">
-    <ns1:be rdf:resource="http://agent.org/at2"/>
+  <rdf:Description rdf:about="http://agent.org/anna">
+    <ns1:reference rdf:resource="http://agent.org/anna"/>
     <ns1:be rdf:resource="http://agent.org/at1"/>
-    <ns1:reference rdf:resource="http://agent.org/andreea"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/at1">
-    <ns1:properti rdf:resource="http://agent.org/best"/>
-    <ns1:reference rdf:resource="http://agent.org/at1"/>
-    <ns1:type rdf:resource="http://agent.org/at"/>
-    <ns1:is_a rdf:resource="http://agent.org/frien"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/at2">
-    <ns1:reference rdf:resource="http://agent.org/at2"/>
-    <ns1:type rdf:resource="http://agent.org/at"/>
-    <ns1:is_a rdf:resource="http://agent.org/friend"/>
-    <ns1:properti rdf:resource="http://agent.org/best"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/be">
     <ns1:reference rdf:resource="http://agent.org/is"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/is_a">
-    <ns1:reference rdf:resource="http://agent.org/is_a"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/frien">
-    <ns1:reference rdf:resource="http://agent.org/frien"/>
-  </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/friend">
     <ns1:reference rdf:resource="http://agent.org/friend"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/at1">
+    <ns1:properti rdf:resource="http://agent.org/best"/>
+    <ns1:reference rdf:resource="http://agent.org/at1"/>
+    <ns1:is_a rdf:resource="http://agent.org/friend"/>
+    <ns1:type rdf:resource="http://agent.org/at"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/best">
+    <ns1:reference rdf:resource="http://agent.org/best"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/properti">
     <ns1:reference rdf:resource="http://agent.org/property"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/best">
-    <ns1:reference rdf:resource="http://agent.org/best"/>
+  <rdf:Description rdf:about="http://agent.org/is_a">
+    <ns1:reference rdf:resource="http://agent.org/is_a"/>
   </rdf:Description>
 </rdf:RDF>
