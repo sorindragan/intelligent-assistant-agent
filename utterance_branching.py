@@ -45,9 +45,9 @@ class UtteranceBranching:
                                                                    )
             if solved_coref == "":
                 solved_coref = phrase[:-1] + "."
-            # print("***********")
-            # print(solved_coref)
-            # print("***********")
+            print("***********")
+            print(solved_coref)
+            print("***********")
             self.c.listen(solved_coref.strip())
             bot_reply = "Roger that!"
 

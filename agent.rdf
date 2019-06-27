@@ -3,59 +3,48 @@
    xmlns:ns1="http://agent.org/"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 >
-  <rdf:Description rdf:about="http://agent.org/on_monday">
-    <ns1:reference rdf:resource="http://agent.org/on monday"/>
-  </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/i">
-    <ns1:meet rdf:resource="http://agent.org/on_monday"/>
-    <ns1:meet rdf:resource="http://agent.org/andreea"/>
-    <ns1:buy rdf:resource="http://agent.org/flour"/>
-    <ns1:buy rdf:resource="http://agent.org/from_supermarket"/>
-    <ns1:buy rdf:resource="http://agent.org/chocol"/>
     <ns1:bring rdf:resource="http://agent.org/camera"/>
-    <ns1:buy rdf:resource="http://agent.org/soda"/>
-    <ns1:buy rdf:resource="http://agent.org/milk"/>
     <ns1:buy rdf:resource="http://agent.org/sugar"/>
+    <ns1:buy rdf:resource="http://agent.org/soda"/>
+    <ns1:buy rdf:resource="http://agent.org/from_supermarket"/>
+    <ns1:buy rdf:resource="http://agent.org/milk"/>
+    <ns1:meet rdf:resource="http://agent.org/andreea"/>
     <ns1:reference rdf:resource="http://agent.org/i"/>
+    <ns1:buy rdf:resource="http://agent.org/chocol"/>
+    <ns1:buy rdf:resource="http://agent.org/flour"/>
+    <ns1:meet rdf:resource="http://agent.org/on_monday"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/at2">
-    <ns1:reference rdf:resource="http://agent.org/at2"/>
-    <ns1:is_a rdf:resource="http://agent.org/friend"/>
-    <ns1:type rdf:resource="http://agent.org/at"/>
-    <ns1:properti rdf:resource="http://agent.org/best"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/she">
-    <ns1:be rdf:resource="http://agent.org/at2"/>
-    <ns1:reference rdf:resource="http://agent.org/she"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/buy">
-    <ns1:reference rdf:resource="http://agent.org/buy"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/chocolate1">
-    <ns1:reference rdf:resource="http://agent.org/chocolate1"/>
-    <ns1:type rdf:resource="http://agent.org/chocol"/>
-    <ns1:properti rdf:resource="http://agent.org/dark"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/friend">
-    <ns1:reference rdf:resource="http://agent.org/friend"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/chocol">
-    <ns1:be rdf:resource="http://agent.org/at5"/>
-    <ns1:properti rdf:resource="http://agent.org/white"/>
-    <ns1:reference rdf:resource="http://agent.org/chocolate"/>
-    <ns1:be rdf:resource="http://agent.org/for_cak"/>
+  <rdf:Description rdf:about="http://agent.org/meet">
+    <ns1:reference rdf:resource="http://agent.org/meeting"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/andreea">
     <ns1:buy rdf:resource="http://agent.org/soda"/>
     <ns1:buy rdf:resource="http://agent.org/sugar"/>
-    <ns1:buy rdf:resource="http://agent.org/chocol"/>
-    <ns1:buy rdf:resource="http://agent.org/milk"/>
     <ns1:buy rdf:resource="http://agent.org/flour"/>
+    <ns1:buy rdf:resource="http://agent.org/milk"/>
+    <ns1:buy rdf:resource="http://agent.org/chocol"/>
     <ns1:buy rdf:resource="http://agent.org/from_supermarket"/>
     <ns1:reference rdf:resource="http://agent.org/andreea"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/meet">
-    <ns1:reference rdf:resource="http://agent.org/meeting"/>
+  <rdf:Description rdf:about="http://agent.org/at2">
+    <ns1:type rdf:resource="http://agent.org/at"/>
+    <ns1:reference rdf:resource="http://agent.org/at2"/>
+    <ns1:is_a rdf:resource="http://agent.org/friend"/>
+    <ns1:properti rdf:resource="http://agent.org/best"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/flour">
+    <ns1:reference rdf:resource="http://agent.org/flour"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/than_chocolate1">
+    <ns1:reference rdf:resource="http://agent.org/than chocolate1"/>
+    <ns1:type rdf:resource="http://agent.org/than_chocol"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/dark">
+    <ns1:reference rdf:resource="http://agent.org/dark"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/best">
+    <ns1:reference rdf:resource="http://agent.org/best"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/at5">
     <ns1:reference rdf:resource="http://agent.org/at5"/>
@@ -63,78 +52,89 @@
     <ns1:is_a rdf:resource="http://agent.org/ingredi"/>
     <ns1:properti rdf:resource="http://agent.org/secret"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/secret">
-    <ns1:reference rdf:resource="http://agent.org/secret"/>
+  <rdf:Description rdf:about="http://agent.org/friend">
+    <ns1:reference rdf:resource="http://agent.org/friend"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/bring">
-    <ns1:reference rdf:resource="http://agent.org/bring"/>
+  <rdf:Description rdf:about="http://agent.org/ingredi">
+    <ns1:properti rdf:resource="http://agent.org/secret"/>
+    <ns1:be rdf:resource="http://agent.org/for_cak"/>
+    <ns1:be rdf:resource="http://agent.org/at7"/>
+    <ns1:reference rdf:resource="http://agent.org/ingredient"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/camera">
-    <ns1:properti rdf:resource="http://agent.org/old"/>
-    <ns1:reference rdf:resource="http://agent.org/camera"/>
+  <rdf:Description rdf:about="http://agent.org/she">
+    <ns1:reference rdf:resource="http://agent.org/she"/>
+    <ns1:be rdf:resource="http://agent.org/at2"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/white">
-    <ns1:reference rdf:resource="http://agent.org/white"/>
+  <rdf:Description rdf:about="http://agent.org/chocolate0">
+    <ns1:type rdf:resource="http://agent.org/chocol"/>
+    <ns1:properti rdf:resource="http://agent.org/white"/>
+    <ns1:reference rdf:resource="http://agent.org/chocolate0"/>
+    <ns1:expens rdf:resource="http://agent.org/than_chocolate1"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/at7">
     <ns1:type rdf:resource="http://agent.org/at"/>
-    <ns1:properti rdf:resource="http://agent.org/white"/>
     <ns1:reference rdf:resource="http://agent.org/at7"/>
     <ns1:is_a rdf:resource="http://agent.org/chocol"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/is_a">
-    <ns1:reference rdf:resource="http://agent.org/is_a"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/expens">
-    <ns1:reference rdf:resource="http://agent.org/expensive"/>
+    <ns1:properti rdf:resource="http://agent.org/white"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/old">
     <ns1:reference rdf:resource="http://agent.org/old"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/dark">
-    <ns1:reference rdf:resource="http://agent.org/dark"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/ingredi">
-    <ns1:be rdf:resource="http://agent.org/at7"/>
-    <ns1:be rdf:resource="http://agent.org/for_cak"/>
-    <ns1:properti rdf:resource="http://agent.org/secret"/>
-    <ns1:reference rdf:resource="http://agent.org/ingredient"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/soda">
-    <ns1:reference rdf:resource="http://agent.org/soda"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/than_chocolate1">
-    <ns1:type rdf:resource="http://agent.org/than_chocol"/>
-    <ns1:reference rdf:resource="http://agent.org/than chocolate1"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/sugar">
-    <ns1:reference rdf:resource="http://agent.org/sugar"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/chocolate0">
-    <ns1:properti rdf:resource="http://agent.org/white"/>
-    <ns1:reference rdf:resource="http://agent.org/chocolate0"/>
-    <ns1:expens rdf:resource="http://agent.org/than_chocolate1"/>
+  <rdf:Description rdf:about="http://agent.org/chocolate1">
+    <ns1:reference rdf:resource="http://agent.org/chocolate1"/>
+    <ns1:properti rdf:resource="http://agent.org/dark"/>
     <ns1:type rdf:resource="http://agent.org/chocol"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/properti">
-    <ns1:reference rdf:resource="http://agent.org/property"/>
+  <rdf:Description rdf:about="http://agent.org/buy">
+    <ns1:reference rdf:resource="http://agent.org/buy"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/milk">
-    <ns1:reference rdf:resource="http://agent.org/milk"/>
+  <rdf:Description rdf:about="http://agent.org/secret">
+    <ns1:reference rdf:resource="http://agent.org/secret"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/camera">
+    <ns1:reference rdf:resource="http://agent.org/camera"/>
+    <ns1:properti rdf:resource="http://agent.org/old"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/white">
+    <ns1:reference rdf:resource="http://agent.org/white"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/be">
     <ns1:reference rdf:resource="http://agent.org/is"/>
   </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/is_a">
+    <ns1:reference rdf:resource="http://agent.org/is_a"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/soda">
+    <ns1:reference rdf:resource="http://agent.org/soda"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/milk">
+    <ns1:reference rdf:resource="http://agent.org/milk"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/chocol">
+    <ns1:be rdf:resource="http://agent.org/for_cak"/>
+    <ns1:be rdf:resource="http://agent.org/at5"/>
+    <ns1:properti rdf:resource="http://agent.org/white"/>
+    <ns1:reference rdf:resource="http://agent.org/chocolate"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/properti">
+    <ns1:reference rdf:resource="http://agent.org/property"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/bring">
+    <ns1:reference rdf:resource="http://agent.org/bring"/>
+  </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/from_supermarket">
     <ns1:reference rdf:resource="http://agent.org/from supermarket"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/flour">
-    <ns1:reference rdf:resource="http://agent.org/flour"/>
+  <rdf:Description rdf:about="http://agent.org/expens">
+    <ns1:reference rdf:resource="http://agent.org/expensive"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://agent.org/on_monday">
+    <ns1:reference rdf:resource="http://agent.org/on monday"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://agent.org/for_cak">
     <ns1:reference rdf:resource="http://agent.org/for cake"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://agent.org/best">
-    <ns1:reference rdf:resource="http://agent.org/best"/>
+  <rdf:Description rdf:about="http://agent.org/sugar">
+    <ns1:reference rdf:resource="http://agent.org/sugar"/>
   </rdf:Description>
 </rdf:RDF>
