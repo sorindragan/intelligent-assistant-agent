@@ -25,6 +25,7 @@ class Conversation:
         self.debug_dict = {}
 
     def words_to_URIs(self, triplet):
+        n = self.n
         s, p, o = triplet
         s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
         s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")

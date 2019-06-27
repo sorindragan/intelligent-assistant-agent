@@ -3,19 +3,21 @@ import sys
 from gtts import gTTS
 
 from utterance_branching import UtteranceBranching
-from coref.coref import *
 from speech_to_text import SpeechToText
 from text_similarity.fail_safe import FailSafe
+from coref.coref import *
 
 def main():
-    coref_solver = CorefSolver()
+
     fail_safe = FailSafe()
+    coref_solver = CorefSolver()
+
     verbose = False
     if "--verbose" in sys.argv:
         verbose = True
-        u = UtteranceBranching(verbose=True)
+        u = UtteranceBranching(coref_solver, verbose=True)
     else:
-        u = UtteranceBranching()
+        u = UtteranceBranching(coref_solver)
 
     kb_file_name = None
     if "--kb" in sys.argv:
@@ -30,16 +32,10 @@ def main():
     if kb_file_name:
         with open(kb_file_name, "r") as f:
             utterances = list(f)
-            for u in utterances:
+            for utterance in utterances:
                 print("##################################################")
-                print(u)
-                solved_coref, unsolved_coref = coref_solver.solve(u[:-1], previous=True, depth=10, verbose=verbose)
-                if solved_coref == "":
-                    solved_coref = u[:-1]
-                print("***********")
-                print(solved_coref)
-                print("***********")
-                response = u.process(solved_coref.strip())
+                print(utterance)
+                response = u.process(utterance)
                 print(response)
 
     if q_file_name:
@@ -50,7 +46,9 @@ def main():
                 print(q)
                 response = u.process(q)
                 if not response:
-                    question, response, similarity =  fail_safe.answer_questions(solved_coref)
+                    question, response, similarity =  fail_safe.answer_questions(q)
+                    coref_solver.prev.pop()
+
                 print("Bot: ",  response)
             return
 
@@ -68,12 +66,7 @@ def main():
         else:
             utterance = utterance[:-1]
 
-        solved_coref, unsolved_coref = coref_solver.solve(utterance, previous=True, depth=5, verbose=True)
-        if solved_coref == "":
-            solved_coref = utterance
-        response = u.process(solved_coref.strip())
-
-        # response = c.process(utterance[:-1])
+        response = u.process(utterance)
 
         if response:
 
@@ -87,7 +80,8 @@ def main():
                 break
 
         else:
-            question, response, similarity =  fail_safe.answer_questions(solved_coref)
+            question, response, similarity = fail_safe.answer_questions(utterance)
+            coref_solver.prev.pop()
             print("Bot: ",  response)
 
             tts = gTTS(text=response, lang='en')
