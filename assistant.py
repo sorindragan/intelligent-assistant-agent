@@ -35,7 +35,7 @@ def main():
             for utterance in utterances:
                 print("##################################################")
                 print(utterance)
-                response = u.process(utterance)
+                response = u.process(utterance[:-1])
                 print(response)
 
     if q_file_name:
@@ -44,10 +44,10 @@ def main():
             for q in questions:
                 print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
                 print(q)
-                response = u.process(q)
-                # if not response:
-                #     question, response, similarity =  fail_safe.answer_questions(q)
-                #     coref_solver.prev.pop()
+                response = u.process(q[:-1])
+                if not response:
+                    question, response, similarity =  fail_safe.answer_questions(q)
+                    coref_solver.prev.pop()
 
                 print("Bot: ",  response)
             return
