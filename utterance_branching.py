@@ -1,4 +1,5 @@
 import random
+from pprint import pprint
 
 from conversation import Conversation
 
@@ -51,6 +52,6 @@ class UtteranceBranching:
             bot_reply = "Roger that!"
 
         if self.verbose:
-            pprint(c.debug())
+            pprint(self.c.debug())
 
         return bot_reply

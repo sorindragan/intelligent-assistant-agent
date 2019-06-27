@@ -22,7 +22,9 @@ class Conversation:
                             ]
         self.verbose = verbose
         self.no = 1
+        self.lose_digits = str.maketrans('', '', digits)
         self.debug_dict = {}
+
 
     def words_to_URIs(self, triplet):
         n = self.n
@@ -47,13 +49,12 @@ class Conversation:
         additional_triplets = []
         for triplet in triplets:
             s, p, o = triplet
-            lose_digits = str.maketrans('', '', digits)
             if s[-1] in digits:
-                new_triplet = self.words_to_URIs((s, "type", s.translate(lose_digits)))
+                new_triplet = self.words_to_URIs((s, "type", s.translate(self.lose_digits)))
                 additional_triplets.append(new_triplet)
                 g.add(new_triplet)
             if o[-1] in digits:
-                new_triplet = self.words_to_URIs((o, "type", o.translate(lose_digits)))
+                new_triplet = self.words_to_URIs((o, "type", o.translate(self.lose_digits)))
                 additional_triplets.append(new_triplet)
                 g.add(new_triplet)
 
@@ -72,7 +73,6 @@ class Conversation:
         g.serialize(self.rdf_file)
 
     def yes_no_query(self, triplets, g):
-        lose_digits = str.maketrans('', '', digits)
         query_triplets = []
         n = self.n
         self.debug_dict["yes_no_query"] = triplets
@@ -91,7 +91,7 @@ class Conversation:
             for triplet in query_triplets:
                 s, p, o = triplet
                 s, p, o = s.split("/")[-1], p.split("/")[-1], o.split("/")[-1]
-                if o.translate(lose_digits) == "at":
+                if o.translate(self.lose_digits) == "at":
                     query_responses = []
                     q = """PREFIX agent: <http://agent.org/>
                     SELECT ?o
@@ -102,7 +102,7 @@ class Conversation:
 
                     self.debug_dict["yes_no_q1"] = q
 
-                    string_responses = [word.split("/")[-1].translate(lose_digits)
+                    string_responses = [word.split("/")[-1].translate(self.lose_digits)
                                         for response in query_responses
                                         for element in response
                                         for word in element
@@ -114,7 +114,7 @@ class Conversation:
                         bot_response = "No, or I don't know that yet.+"
                         break
 
-                if s.translate(lose_digits) == "at":
+                if s.translate(self.lose_digits) == "at":
                     query_responses = []
                     q = """PREFIX agent: <http://agent.org/>
                     SELECT ?s
@@ -124,7 +124,7 @@ class Conversation:
                     query_responses.append(g.query(q))
                     self.debug_dict["yes_no_q2"] = q
 
-                    string_responses = [word.split("/")[-1].translate(lose_digits)
+                    string_responses = [word.split("/")[-1].translate(self.lose_digits)
                                         for response in query_responses
                                         for element in response
                                         for word in element
@@ -135,7 +135,7 @@ class Conversation:
                         bot_response = "No, or I don't know that yet.+"
                         break
 
-                if s.translate(lose_digits) != "at" and o.translate(lose_digits) != "at":
+                if s.translate(self.lose_digits) != "at" and o.translate(self.lose_digits) != "at":
                     bot_response = "No, or I don't know that yet.+"
 
         return bot_response
@@ -163,7 +163,7 @@ class Conversation:
             self.debug_dict["who_what_q1"] = q
 
 
-        string_responses = [word.split("/")[-1].translate(lose_digits)
+        string_responses = [word.split("/")[-1].translate(self.lose_digits)
                             for response in query_responses
                             for element in response
                             for word in element
@@ -250,14 +250,13 @@ class Conversation:
             query_responses.append(g.query(q))
             self.debug_dict["where_when_q1"] = q
 
-        stem_responses = [word.split("/")[-1].translate(lose_digits)
+        stem_responses = [word.split("/")[-1].translate(self.lose_digits)
                           for response in query_responses
                           for element in response
                           for word in element
                           ]
 
-        lose_digits = str.maketrans('', '', digits)
-        stem_responses = filter(lambda x: x.translate(lose_digits) != "at", stem_responses)
+        stem_responses = filter(lambda x: x.translate(self.lose_digits) != "at", stem_responses)
         self.debug_dict["where_when_stem_responses"] = stem_responses
 
         lexical_responses = []
@@ -296,7 +295,7 @@ class Conversation:
             self.debug_dict["which_q1"] = q
             type_responses.append(g.query(q))
 
-        stem_responses = [word.split("/")[-1].translate(lose_digits)
+        stem_responses = [word.split("/")[-1].translate(self.lose_digits)
                           for response in query_responses
                           for element in response
                           for word in element
@@ -360,9 +359,8 @@ class Conversation:
                 final_response += oword + " "
 
         self.debug_dict["original_porperties"] = original_properties
-        lose_digits = str.maketrans('', '', digits)
         if original_word:
-            final_response += original_word.translate(lose_digits)
+            final_response += original_word.translate(self.lose_digits)
 
         return final_response
 
