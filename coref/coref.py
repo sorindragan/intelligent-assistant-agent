@@ -117,7 +117,7 @@ class CorefSolver():
                 depth = min(depth, len(self.prev))
 
             while (unsolv_coref != [] and (current_depth != depth)):
-                iterative_solver = self.prev[depth - 1 - current_depth] + " . " + iterative_solver
+                iterative_solver = self.prev[depth - 1 - current_depth] + " " + iterative_solver
                 self.doc = self.nlp(iterative_solver)
                 # print(iterative_solver.replace('^', ''))
                 unsolv_coref = self.unsolved_coref()
@@ -134,7 +134,12 @@ class CorefSolver():
             else:
 
 #                 print(total_n_of_sents, n_of_sents)
-                solved_coref = solved_coref.split('.')[total_n_of_sents - n_of_sents :]
+                # solved_coref = solved_coref.split('.')[total_n_of_sents - n_of_sents :]
+                # solved_coref = ' '.join(map(str, solved_coref))
+                # self.prev.append(solved_coref)
+                total_n_of_sents = len(list(self.doc.sents))
+#                 print(total_n_of_sents, n_of_sents)
+                solved_coref = list((self.nlp(solved_coref)).doc.sents)[total_n_of_sents - n_of_sents :]
                 solved_coref = ' '.join(map(str, solved_coref))
                 self.prev.append(solved_coref)
             if verbose:
