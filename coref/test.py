@@ -17,5 +17,5 @@ from coref import CorefSolver
 
 c = CorefSolver()
 
-response = c.solve("On Monday I am meeting Andreea.", previous=True, verbose=True)
+response = c.solve("On Monday I am meeting Andreea...", previous=True, verbose=True)
 response = c.solve("She is my best friend.", previous=True, verbose=True)
