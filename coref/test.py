@@ -1,14 +1,20 @@
 import spacy
 import neuralcoref
+#
+# nlp = spacy.load('en')
+#
+# # Let's try before using the conversion dictionary:
+# neuralcoref.add_to_pipe(nlp)
+#
+# # Here are three ways we can add the conversion dictionary
+# # nlp.remove_pipe("neuralcoref")
+# # neuralcoref.add_to_pipe(nlp, conv_dict={'Sudo': ['dog']})
+# doc = nlp(u"On Monday, I am meeting Andreea. . She is my best friend.")
+# #print(doc._.coref_scores)
+# print(doc._.coref_resolved)
 
-nlp = spacy.load('en')
+from coref import CorefSolver
 
-# Let's try before using the conversion dictionary:
-neuralcoref.add_to_pipe(nlp)
+c = CorefSolver()
 
-# Here are three ways we can add the conversion dictionary
-# nlp.remove_pipe("neuralcoref")
-# neuralcoref.add_to_pipe(nlp, conv_dict={'Sudo': ['dog']})
-doc = nlp(u"On Monday, I am meeting Andreea. . She is my best friend.")
-#print(doc._.coref_scores)
-print(doc._.coref_resolved)
+response = c.solve("On Monday I am meeting Andreea..", previo)

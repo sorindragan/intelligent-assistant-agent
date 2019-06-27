@@ -45,9 +45,9 @@ def main():
                 print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
                 print(q)
                 response = u.process(q)
-                if not response:
-                    question, response, similarity =  fail_safe.answer_questions(q)
-                    coref_solver.prev.pop()
+                # if not response:
+                #     question, response, similarity =  fail_safe.answer_questions(q)
+                #     coref_solver.prev.pop()
 
                 print("Bot: ",  response)
             return
