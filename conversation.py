@@ -151,8 +151,7 @@ class Conversation:
                     s == "who" and p == "is_a", o == "who" and p == "is_a"
                     ]):
                 continue
-
-            subj, pred, obj = self.words_to_URIs(triplet)
+            s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
 
             q = """PREFIX agent: <http://agent.org/>
             SELECT ?o
@@ -240,7 +239,7 @@ class Conversation:
         n = self.n
         for triplet in triplets:
             s, p, o = triplet
-            subj, pred, obj = self.words_to_URIs(triplet)
+            s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
 
             q = """PREFIX agent: <http://agent.org/>
             SELECT ?o
@@ -285,7 +284,7 @@ class Conversation:
         original_word = None
         for triplet in triplets:
             s, p, o = triplet
-            subj, pred, obj = self.words_to_URIs(triplet)
+            s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
 
             q = """PREFIX agent: <http://agent.org/>
             SELECT ?s
@@ -296,7 +295,7 @@ class Conversation:
             type_responses.append(g.query(q))
 
         stem_responses = [word.split("/")[-1].translate(self.lose_digits)
-                          for response in query_responses
+                          for response in type_responses
                           for element in response
                           for word in element
                           ]
