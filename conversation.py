@@ -1,3 +1,4 @@
+from nltk.corpus import wordnet
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from pprint import pprint
 from rdflib import Graph, Literal, Namespace, URIRef
@@ -27,6 +28,8 @@ class Conversation:
         self.lose_digits = str.maketrans('', '', digits)
         self.debug_dict = {}
 
+    def generate_antonym_triplet(self, predicate):
+        pass
 
     def words_to_URIs(self, triplet):
         n = self.n
