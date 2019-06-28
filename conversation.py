@@ -2,6 +2,8 @@ from nltk.stem import PorterStemmer, WordNetLemmatizer
 from pprint import pprint
 from rdflib import Graph, Literal, Namespace, URIRef
 from string import digits
+import itertools
+import functools
 
 from sentence_processor import SentenceProcessor
 from question_processor import QuestionProcessor
@@ -33,6 +35,15 @@ class Conversation:
         s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
         subj, pred, obj = URIRef(n + s), URIRef(n + p), URIRef(n + o)
         return (subj, pred, obj)
+
+    def URIs_to_words(self, responses):
+        strings = [word.split("/")[-1]
+                   for response in responses
+                   for element in response
+                   for word in element
+                   if word.split("/")[-1] != "null"
+                   ]
+        return strings
 
     def listen(self, phrase):
         """ Construct and update the RDF Graph based on triplets extracted
@@ -102,11 +113,7 @@ class Conversation:
 
                     self.debug_dict["yes_no_q1"] = q
 
-                    string_responses = [word.split("/")[-1].translate(self.lose_digits)
-                                        for response in query_responses
-                                        for element in response
-                                        for word in element
-                                        ]
+                    string_responses = self.URIs_to_words(query_responses)
 
                     self.debug_dict["yes_no_string_responses_object"] = string_responses
 
@@ -124,11 +131,7 @@ class Conversation:
                     query_responses.append(g.query(q))
                     self.debug_dict["yes_no_q2"] = q
 
-                    string_responses = [word.split("/")[-1].translate(self.lose_digits)
-                                        for response in query_responses
-                                        for element in response
-                                        for word in element
-                                        ]
+                    string_responses = self.URIs_to_words(query_responses)
 
                     self.debug_dict["yes_no_string_responses_subject"] = string_responses
                     if "at" not in string_responses:
@@ -139,6 +142,23 @@ class Conversation:
                     bot_response = "No, or I don't know that yet.+"
 
         return bot_response
+
+    def reference_query(self, word):
+        g = Graph()
+        g.parse(self.rdf_file, format="xml")
+        q_ = """PREFIX agent: <http://agent.org/>
+        SELECT ?o
+        WHERE {{
+            agent:{} agent:reference ?o.
+        }}""".format(word)
+        res = g.query(q_)
+        return self.URIs_to_words([res])[0]
+
+    def stem_to_reference(self, obj_prop_tuple):
+        key, values = obj_prop_tuple
+        new_key = self.reference_query(key)
+        new_values = list(map(self.reference_query, values))
+        return (new_key, new_values)
 
     def who_what_query(self, triplets, g):
         query_properties = {}
@@ -162,78 +182,62 @@ class Conversation:
             query_responses.append(g.query(q))
             self.debug_dict["who_what_q1"] = q
 
-        string_responses = [word.split("/")[-1]
-                            for response in query_responses
-                            for element in response
-                            for word in element
-                            if word.split("/")[-1] != "null"
-                            ]
+        string_responses = self.URIs_to_words(query_responses)
+
         for word in string_responses:
+            if "at" == word[:2] and word[-1] in digits:
+                continue
             query_properties[word] = []
 
         self.debug_dict["who_what_string_responses"] = string_responses
 
-        stem_response = []
-        stem_response2 = []
+        at_reponses = []
         for word in list(set(string_responses)):
             if word[:2] == "at":
                 q_p = """PREFIX agent: <http://agent.org/>
-                SELECT ?p ?o
+                SELECT ?o
                 WHERE {{
-                    agent:{} ?p ?o.
-                    FILTER (?p != agent:reference) .
+                    agent:{} agent:is_a ?o.
                 }}""".format(word)
-                query_properties[word].append(g.query(q_p))
+                at_reponses.append(g.query(q_p))
                 self.debug_dict["who_what_q2"] = q_p
+
+                type = at_reponses[-1]
+                type = self.URIs_to_words([type])[0]
+
+                q_s = """PREFIX agent: <http://agent.org/>
+                SELECT ?o
+                WHERE {{
+                    agent:{} agent:properti ?o.
+                }}""".format(word)
+                if type not in query_properties:
+                    query_properties[type] = []
+                query_properties[type].append(g.query(q_s))
             else:
                 q_s = """PREFIX agent: <http://agent.org/>
                 SELECT ?o
                 WHERE {{
                     agent:{} agent:properti ?o.
                 }}""".format(word)
-                simple_properties = g.query(q_s)
-                for prop in simple_properties:
-                    for tuple in prop:
-                        stem = tuple.split("/")[-1]
-                        stem_response2.append(stem)
-                stem_response2.append(word)
+                query_properties[word].append(g.query(q_s))
 
-        object_type = None
+
         for key in query_properties:
-            for result in query_properties[key]:
-                for element in result:
-                    self.debug_dict["who_what_inside_query_properties"] = element
-                    if element[-2].split("/")[-1] == "is_a":
-                        object_type = element[-1].split("/")[-1]
-                        continue
+            query_properties[key] = self.URIs_to_words(query_properties[key])
 
-                    property = element[-1].split("/")[-1]
+        object_properties = list(query_properties.items())
+        object_properties = [element for element in object_properties
+                             if "_" not in element[0]
+                             ]
+        print(object_properties)
+        results = list(map(self.stem_to_reference, object_properties))
+        print(results)
 
-                    if property == "null":
-                        continue
-                    self.debug_dict["who_what_inside_to_append_propertiy"] = property
-                    stem_response.append(property)
-            stem_response.append(object_type)
-
-        lexical_responses = []
-        for stem in list(set(stem_response + stem_response2)):
-            q_s = """PREFIX agent: <http://agent.org/>
-            SELECT ?o
-            WHERE {{
-                agent:{} agent:reference ?o.
-            }}""".format(stem)
-            self.debug_dict["who_what_q3"] = q_s
-            lexical_responses.append(g.query(q_s))
-
-        string_response = ""
-        for response in lexical_responses:
-            for element in response:
-                for triplet in element:
-                    word = triplet.split("/")[-1]
-                    word = word.replace("_", " ")
-                    string_response += word + " "
-
-        return string_response[:-1]
+        final_response = functools.reduce(lambda acc, elem:
+                                          acc + ", ".join(map(str, elem[1])) + " " + str(elem[0]) + " and ",
+                                          results, ""
+                                          )
+        return final_response[:-4]
 
     def where_when_query(self, triplets, g):
         query_responses = []
@@ -251,13 +255,8 @@ class Conversation:
             query_responses.append(g.query(q))
             self.debug_dict["where_when_q1"] = q
 
-        stem_responses = [word.split("/")[-1]
-                          for response in query_responses
-                          for element in response
-                          for word in element
-                          ]
-
-        stem_responses = filter(lambda x: x.translate(self.lose_digits) != "at", stem_responses)
+        stem_responses = self.URIs_to_words(query_responses)
+        stem_responses = filter(lambda w: w.translate(self.lose_digits) != "at" or "_" in w, stem_responses)
         self.debug_dict["where_when_stem_responses"] = stem_responses
 
         lexical_responses = []
@@ -270,19 +269,19 @@ class Conversation:
             self.debug_dict["where_when_q2"] = q
             lexical_responses.append(g.query(q_s))
 
-        string_response = ""
-        for response in lexical_responses:
-            for element in response:
-                for triplet in element:
-                    word = triplet.split("/")[-1]
-                    word = word.replace("_", " ")
-                    string_response += word + " "
+        string_responses = self.URIs_to_words(lexical_responses)
 
-        return string_response[:-1]
+        final_response = functools.reduce(lambda acc, elem:
+                                          acc + elem.replace("_", " ") + " ",
+                                          string_responses, ""
+                                          )
+        return final_response[:-1]
+
 
     def which_query(self, triplets, g):
-        type_responses = []
         n = self.n
+        final_response = ""
+        type_responses = []
         original_word = None
         for triplet in triplets:
             s, p, o = triplet
@@ -297,73 +296,43 @@ class Conversation:
             self.debug_dict["which_q1"] = q
             type_responses.append(g.query(q))
 
-        stem_responses = [word.split("/")[-1]
-                          for response in type_responses
-                          for element in response
-                          for word in element
-                          ]
+        type_responses = self.URIs_to_words(type_responses)
 
-        self.debug_dict["types"] = stem_responses
-
-        response_word = None
-        for word in stem_responses:
-            q_2 = """PREFIX agent: <http://agent.org/>
+        word_response = None
+        for word in type_responses:
+            q_o = """PREFIX agent: <http://agent.org/>
             SELECT ?o
             WHERE {{
                 agent:{} agent:{} ?o.
             }}""".format(word, p)
-            self.debug_dict["which_q2"] = q_2
-            res = g.query(q_2)
-            for tuple in res:
-                for triplet in tuple:
-                    compare_object = triplet.split("/")[-1]
-                    if compare_object:
-                        response_word = word
+            res = g.query(q_o)
+            if res:
+                word_response = word
 
-        self.debug_dict["response_word"] = response_word
-
-        q_3 = """PREFIX agent: <http://agent.org/>
-        SELECT ?o
-        WHERE {{
-            agent:{} agent:reference ?o.
-        }}""".format(response_word)
-        res = g.query(q_3)
-        for org in res:
-            original_word = org[0].split("/")[-1]
-            self.debug_dict["original_word"] = original_word
-
-        stem_properties = []
-        q_4 = """PREFIX agent: <http://agent.org/>
-        SELECT ?o
-        WHERE {{
-            agent:{} agent:properti ?o.
-        }}""".format(response_word)
-        simple_properties = g.query(q_4)
-        for prop in simple_properties:
-            for tuple in prop:
-                stem = tuple.split("/")[-1]
-                stem_properties.append(stem)
-        self.debug_dict["stem_properties"] = stem_properties
-
-        original_properties = []
-        final_response = " "
-        for stem in stem_properties:
-            q_5 = """PREFIX agent: <http://agent.org/>
+        if word_response:
+            q_r = """PREFIX agent: <http://agent.org/>
             SELECT ?o
             WHERE {{
                 agent:{} agent:reference ?o.
-            }}""".format(stem)
-            original_properties.append(g.query(q_5))
+            }}""".format(word_response)
+            org = g.query(q_r)
+            original_word = self.URIs_to_words([org])[0]
 
-        for prop in original_properties:
-            for tuple in prop:
-                oword = tuple[0].split("/")[-1]
-                final_response += oword + " "
+            q_p = """PREFIX agent: <http://agent.org/>
+            SELECT ?o
+            WHERE {{
+                agent:{} agent:properti ?o.
+            }}""".format(word_response)
+            stem_properties = g.query(q_p)
+            stem_properties = self.URIs_to_words([stem_properties])
+            print(stem_properties)
+            org_properties = list(map(self.reference_query, stem_properties))
 
-        self.debug_dict["original_porperties"] = original_properties
-        if original_word:
+            final_response = functools.reduce(lambda acc, elem:
+                                              acc + elem + " ",
+                                              org_properties, ""
+                                              )
             final_response += original_word.translate(self.lose_digits)
-
         return final_response
 
     def reply(self, phrase):
