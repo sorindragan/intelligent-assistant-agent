@@ -45,8 +45,18 @@ def main():
                 print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
                 print(q)
                 response = u.process(q[:-1])
-                if not response:
-                    question, response, similarity =  fail_safe.answer_questions(q)
+                if response:
+                    if response[-1] == "+":
+                        question, fail_response, similarity = fail_safe.answer_questions(q[:-1])
+                        coref_solver.prev.pop()
+                        print("*********", similarity)
+                        if similarity > 0.7:
+                            response = fail_response
+                        else:
+                            response = response[:-1]
+                else:
+                    question, response, similarity =  fail_safe.answer_questions(q[:-1])
+                    print(similarity)
                     coref_solver.prev.pop()
 
                 print("Bot: ",  response)
@@ -70,6 +80,14 @@ def main():
 
         if response:
 
+            if response[-1] == "+":
+                question, fail_response, similarity = fail_safe.answer_questions(utterance)
+                coref_solver.prev.pop()
+                if similarity > 0.7:
+                    response = fail_response
+                else:
+                    response = response[:-1]
+
             tts = gTTS(text=response, lang='en')
             tts.save("response.mp3")
             os.system("mpg123 response.mp3")
@@ -81,6 +99,7 @@ def main():
 
         else:
             question, response, similarity = fail_safe.answer_questions(utterance)
+            print(similarity)
             coref_solver.prev.pop()
             print("Bot: ",  response)
 

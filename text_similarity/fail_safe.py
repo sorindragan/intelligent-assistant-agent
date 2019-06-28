@@ -7,9 +7,9 @@ class FailSafe:
         FailSafe Mechanism
     """
 
-    def __init__(self):
+    def __init__(self, treshold=0.7):
         self.questions = self.load_questions()
-        self.treshold = 0.6
+        self.treshold = treshold
         self.fail_answer = ["I didn't understand that. Could you rephrase that?", "Sory I don't understand"]
 
     def load_questions(self):
@@ -33,7 +33,7 @@ class FailSafe:
         if similarity >= self.treshold:
             return question, choice(self.questions[question]), similarity
         else:
-            return to_answer, choice(self.fail_answer), 1
+            return to_answer, choice(self.fail_answer), similarity
 
 # if __name__ == '__main__':
 #
