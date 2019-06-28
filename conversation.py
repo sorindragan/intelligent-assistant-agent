@@ -1,5 +1,6 @@
 from nltk.corpus import wordnet
 from nltk.stem import PorterStemmer, WordNetLemmatizer
+from nltk.corpus import wordnet
 from pprint import pprint
 from rdflib import Graph, Literal, Namespace, URIRef
 from string import digits
@@ -30,6 +31,23 @@ class Conversation:
 
     def generate_antonym_triplet(self, predicate):
         pass
+
+    def generate_antonym(self, predicate):
+
+        syn = wordnet.synsets(predicate)
+        if not syn:
+            return None
+        if not syn[0].lemmas():
+            return None
+        if not syn[0].lemmas()[0].antonyms():
+            return None
+        antonym = syn[0].lemmas()[0].antonyms()[0].name()
+
+        if len(antonym) <= 6:
+            antonym += "er"
+
+        return antonym
+
 
     def words_to_URIs(self, triplet):
         n = self.n
@@ -72,8 +90,22 @@ class Conversation:
                 additional_triplets.append(new_triplet)
                 g.add(new_triplet)
 
+            # print(triplet)
+
+            if p not in ["property", "is_a"]:
+                antonym = self.generate_antonym(p)
+                if antonym:
+                    prep, new_s = o.split(" ")
+                    new_o = prep + " " + s
+                    antonym_triplet = (new_s, antonym, new_o)
+                    a_subj, a_pred, a_obj = self.words_to_URIs(antonym_triplet)
+                    g.add((a_subj, a_pred, a_obj))
+                    # print(antonym_triplet)
+
+
             subj, pred, obj = self.words_to_URIs(triplet)
             g.add((subj, pred, obj))
+
             s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
             additional_triplets.append((subj, URIRef(n + "reference"), URIRef(n + s)))
             additional_triplets.append((pred, URIRef(n + "reference"), URIRef(n + p)))
@@ -112,6 +144,9 @@ class Conversation:
                         agent:{} agent:{} ?o.
                     }}""".format(s, p)
                     query_responses = g.query(q)
+                    if not query_responses:
+                        bot_response = "No, or I don't know that yet.+"
+                        break
 
                     self.debug_dict["yes_no_q1"] = q
 
@@ -130,6 +165,9 @@ class Conversation:
                         ?s agent:{} agent:{}.
                     }}""".format(p, o)
                     query_responses = g.query(q)
+                    if not query_responses:
+                        bot_response = "No, or I don't know that yet.+"
+                        break
 
                     self.debug_dict["yes_no_q2"] = q
 

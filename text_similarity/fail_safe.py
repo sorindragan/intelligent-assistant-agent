@@ -34,18 +34,3 @@ class FailSafe:
             return question, choice(self.questions[question]), similarity
         else:
             return to_answer, choice(self.fail_answer), similarity
-
-# if __name__ == '__main__':
-#
-#
-#     sentences = [
-#         "What's the purpose of life?",
-#         "What's the meaning of life?",
-#         "Describe yourself?"
-#     ]
-#
-#
-#     f = FailSafe ()
-#     for sentence in sentences:
-#         print()
-#         print(f.answer_questions(sentence))
