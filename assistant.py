@@ -11,6 +11,7 @@ def main():
 
     fail_safe = FailSafe()
     coref_solver = CorefSolver()
+    print("Press H for help.")
 
     verbose = False
     if "--verbose" in sys.argv:
@@ -67,8 +68,18 @@ def main():
     while True:
 
         # type or say
-        print("Write Something or press V for voice input: ", end='', flush=True)
+        print("You: ", end='', flush=True)
         utterance = str(sys.stdin.readline())
+
+        if utterance[:-1].lower() == "h":
+            print("Press H for help.")
+            print("Press S to view assistant's internal state.")
+            print("Press V in order to interect with the assistant with your voice.")
+            continue
+
+        if utterance[:-1].lower() == "s":
+            u.internal_state()
+            continue
 
         if utterance[:-1].lower() == "v":
             utterance = speech_to_text.process()
@@ -90,7 +101,7 @@ def main():
 
             tts = gTTS(text=response, lang='en')
             tts.save("response.mp3")
-            os.system("mpg123 response.mp3")
+            os.system("mpg123 response.mp3 2> /dev/null")
 
             print("Bot: ",  response)
 
@@ -105,7 +116,7 @@ def main():
 
             tts = gTTS(text=response, lang='en')
             tts.save("response.mp3")
-            os.system("mpg123 response.mp3")
+            os.system("mpg123 response.mp3 2> /dev/null")
 
         print()
 

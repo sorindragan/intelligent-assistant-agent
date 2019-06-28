@@ -23,6 +23,8 @@ class UtteranceBranching:
             self.c = Conversation()
         self.coref_solver = coref_solver
 
+    def internal_state(self):
+        self.c.internal_state()
 
     def process(self, phrase):
         bot_reply = ""

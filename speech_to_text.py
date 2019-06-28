@@ -18,7 +18,7 @@ class SpeechToText:
                            ) as source:
 
         	self.r.adjust_for_ambient_noise(source)
-        	print("Say Something: ", end='', flush=True)
+        	print("Say something: ", end='', flush=True)
         	audio = self.r.listen(source)
 
         	try:

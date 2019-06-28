@@ -152,6 +152,7 @@ class Conversation:
                     ]):
                 continue
             s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
+            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
 
             q = """PREFIX agent: <http://agent.org/>
             SELECT ?o
@@ -240,6 +241,7 @@ class Conversation:
         for triplet in triplets:
             s, p, o = triplet
             s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
+            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
 
             q = """PREFIX agent: <http://agent.org/>
             SELECT ?o
@@ -285,6 +287,7 @@ class Conversation:
         for triplet in triplets:
             s, p, o = triplet
             s, p, o = self.stemmer.stem(s), self.stemmer.stem(self.lemm.lemmatize(p, 'v')), self.stemmer.stem(o)
+            s, p, o = s.replace(" ", "_"), p.replace(" ", "_"), o.replace(" ", "_")
 
             q = """PREFIX agent: <http://agent.org/>
             SELECT ?s
@@ -390,3 +393,15 @@ class Conversation:
 
     def debug(self):
         return self.debug_dict
+
+    def internal_state(self):
+        internal_triplets = []
+        g = Graph()
+        g.parse(self.rdf_file, format="xml")
+        for triplet in g:
+            internal_triplets.append(tuple([element.n3().split("/")[-1][:-1]
+                                            for element in triplet
+                                            ])
+                                    )
+        internal_triplets = list(filter(lambda t: t[1] != "reference", internal_triplets))
+        print(internal_triplets)
