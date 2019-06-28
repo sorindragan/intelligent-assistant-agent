@@ -103,17 +103,16 @@ class Conversation:
                 s, p, o = triplet
                 s, p, o = s.split("/")[-1], p.split("/")[-1], o.split("/")[-1]
                 if o.translate(self.lose_digits) == "at":
-                    query_responses = []
                     q = """PREFIX agent: <http://agent.org/>
                     SELECT ?o
                     WHERE {{
                         agent:{} agent:{} ?o.
                     }}""".format(s, p)
-                    query_responses.append(g.query(q))
+                    query_responses = g.query(q)
 
                     self.debug_dict["yes_no_q1"] = q
 
-                    string_responses = self.URIs_to_words(query_responses)
+                    string_responses = self.URIs_to_words([query_responses])[0]
 
                     self.debug_dict["yes_no_string_responses_object"] = string_responses
 
@@ -122,19 +121,19 @@ class Conversation:
                         break
 
                 if s.translate(self.lose_digits) == "at":
-                    query_responses = []
                     q = """PREFIX agent: <http://agent.org/>
                     SELECT ?s
                     WHERE {{
                         ?s agent:{} agent:{}.
                     }}""".format(p, o)
-                    query_responses.append(g.query(q))
+                    query_responses = g.query(q)
+
                     self.debug_dict["yes_no_q2"] = q
 
-                    string_responses = self.URIs_to_words(query_responses)
+                    string_responses = self.URIs_to_words([query_responses])[0]
 
                     self.debug_dict["yes_no_string_responses_subject"] = string_responses
-                    if "at" not in string_responses:
+                    if "at" not in str(string_responses):
                         bot_response = "No, or I don't know that yet.+"
                         break
 
@@ -229,9 +228,9 @@ class Conversation:
         object_properties = [element for element in object_properties
                              if "_" not in element[0]
                              ]
-        print(object_properties)
+        # print(object_properties)
         results = list(map(self.stem_to_reference, object_properties))
-        print(results)
+        # print(results)
 
         final_response = functools.reduce(lambda acc, elem:
                                           acc + ", ".join(map(str, elem[1])) + " " + str(elem[0]) + " and ",
@@ -256,7 +255,7 @@ class Conversation:
             self.debug_dict["where_when_q1"] = q
 
         stem_responses = self.URIs_to_words(query_responses)
-        stem_responses = filter(lambda w: w.translate(self.lose_digits) != "at" or "_" in w, stem_responses)
+        stem_responses = filter(lambda w: w.translate(self.lose_digits) != "at" and "_" in w, stem_responses)
         self.debug_dict["where_when_stem_responses"] = stem_responses
 
         lexical_responses = []
@@ -325,7 +324,7 @@ class Conversation:
             }}""".format(word_response)
             stem_properties = g.query(q_p)
             stem_properties = self.URIs_to_words([stem_properties])
-            print(stem_properties)
+            # print(stem_properties)
             org_properties = list(map(self.reference_query, stem_properties))
 
             final_response = functools.reduce(lambda acc, elem:
