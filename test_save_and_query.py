@@ -1,10 +1,11 @@
-from conversation import Conversation
+from utterance_branching import UtteranceBranching
+from coref.coref import CorefSolver
 from rdflib import Graph, URIRef, Namespace
 
 
 def rdf_save(phrase, file_name):
-    c = Conversation(file_name)
-    c.process(phrase)
+    u = UtteranceBranching(CorefSolver(), file=file_name)
+    u.process(phrase)
 
 def rdf_query(file_name):
     g1 = Graph()
