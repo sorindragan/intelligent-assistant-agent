@@ -100,17 +100,3 @@ class WordNetSimilarity:
         sim_scores = np.array(scores)
 
         return self.intents[sim_scores.argmax()], sim_scores.max()
-
-
-# if __name__ == '__main__':
-#
-#
-#     sentences = ['I am good, how are you doing?', "I'm fine, how are you?", 'Doing good, how are you?', 'Awesome, how are you?', 'I am doing great', 'What is your favorite movie?', "What's your favorite color?", 'Do you have a favorite color?', 'What is your name?', 'Do you have a name?', 'Who are you?', 'Who created you?', 'Who is your master?', 'Are you a robot?', 'Do you consider yourself a robot?', 'Tell me a joke.', 'What jokes do you know?', 'Make me laugh.']
-#
-#     # focus_sentence = "Some gorgeous creatures are dogs."
-#     focus_sentence = "What's the meaning of life?"
-#     w = WordNetSimilarity(sentences, focus_sentence)
-#     for sentence in sentences:
-#         print("Similarity(\"%s\", \"%s\") = %s" % (focus_sentence, sentence, w.sentence_similarity(focus_sentence, sentence)))
-#
-#     print(w.compute_similarity())

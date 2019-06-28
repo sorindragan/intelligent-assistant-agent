@@ -34,7 +34,7 @@ def main():
         with open(kb_file_name, "r") as f:
             utterances = list(f)
             for utterance in utterances:
-                print("##################################################")
+                print("-------------------------------------------------------")
                 print(utterance)
                 response = u.process(utterance[:-1])
                 print(response)
@@ -43,21 +43,21 @@ def main():
         with open(q_file_name, "r") as f:
             questions = list(f)
             for q in questions:
-                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+                print("-------------------------------------------------------")
                 print(q)
                 response = u.process(q[:-1])
                 if response:
                     if response[-1] == "+":
                         question, fail_response, similarity = fail_safe.answer_questions(q[:-1])
                         coref_solver.prev.pop()
-                        print("*********", similarity)
+                        # print("*********", similarity)
                         if similarity > 0.7:
                             response = fail_response
                         else:
                             response = response[:-1]
                 else:
                     question, response, similarity =  fail_safe.answer_questions(q[:-1])
-                    print(similarity)
+                    # print(similarity)
                     coref_solver.prev.pop()
 
                 print("Bot: ",  response)
@@ -110,7 +110,7 @@ def main():
 
         else:
             question, response, similarity = fail_safe.answer_questions(utterance)
-            print(similarity)
+            # print(similarity)
             coref_solver.prev.pop()
             print("Bot: ",  response)
 
