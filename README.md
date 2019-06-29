@@ -30,9 +30,9 @@ Usage Examples:
 
 4) Conversation and branching component
 ```python
-from utterance_branching import UtteranceBranching
-from coref.coref import NeuralCoref
-u =  UtteranceBranching(NeuralCoref())
-u.process("Mark is my best friend.")
-u.process("Who is Mark?")
+> from utterance_branching import UtteranceBranching
+> from coref.coref import NeuralCoref
+> u =  UtteranceBranching(NeuralCoref())
+> u.process("Mark is my best friend.")
+> u.process("Who is Mark?")
 ```
