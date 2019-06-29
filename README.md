@@ -5,23 +5,34 @@
 
 ## Intelligent Assistant Agent
 
-Usage Example:
+Usage Examples:
 
-1)
+
+1) Running the assistant
+```python
+> python assitant.py
+```
+
+2) Triplets extraction from affiramtions
 ```python
 > from sentence_processor import SentenceProcessor
 > phrase = "The tomato, which is one of the most popular salad ingredients, grows in many shapes and colors in greenhouses around the world."
 > sp = SentenceProcessor(phrase)
 > sp.process()
 ```
-2)
+
+3) Triplets extraction from questions
 ```python
-> from conversation import Conversation
-> c = Conversation()
-> c.process("Man acts as though he were the shaper and master of language while, in fact, language remains the master of man.")
+> from question_processor import QuestionProcessor
+> q = QuestionProcessor("What is my bike code?")
+> q.process()
 ```
 
-3)
+4) Conversation and branching component
 ```python
-> python assitant.py
+from utterance_branching import UtteranceBranching
+from coref.coref import NeuralCoref
+u =  UtteranceBranching(NeuralCoref())
+u.process("Mark is my best friend.")
+u.process("Who is Mark?")
 ```
