@@ -1,4 +1,7 @@
 [![Build Status](https://travis-ci.com/sorindragan/intelligent-assistant-agent.png)](https://travis-ci.com/sorindragan/intelligent-assistant-agent)
+[![spaCy](https://img.shields.io/badge/made%20with-spaCy-blue.svg)](https://spacy.io)
+[![neuralcoref](https://img.shields.io/badge/made%20with-neuralcoref-blueviolet.svg)](https://huggingface.co/coref)
+
 
 ## Intelligent Assistant Agent
 
