@@ -94,7 +94,7 @@ class Conversation:
 
             if p not in ["property", "is_a"]:
                 antonym = self.generate_antonym(p)
-                if antonym:
+                if antonym and len(o.split(" ")) == 2:
                     prep, new_s = o.split(" ")
                     new_o = prep + " " + s
                     antonym_triplet = (new_s, antonym, new_o)
