@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/sorindragan/intelligent-assistant-agent.png)](https://travis-ci.com/sorindragan/intelligent-assistant-agent)
+[![Build Status](https://travis-ci.com/sorindragan/intelligent-assistant-agent.png)](https://app.travis-ci.com/github/sorindragan/intelligent-assistant-agent)
 [![spaCy](https://img.shields.io/badge/made%20with-spaCy-blue.svg)](https://spacy.io)
 [![neuralcoref](https://img.shields.io/badge/made%20with-neuralcoref-blueviolet.svg)](https://huggingface.co/coref)
 
@@ -13,7 +13,7 @@ Usage Examples:
 > python assitant.py
 ```
 
-2) Triplets extraction from affiramtions
+2) Triplets extraction from affirmations
 ```python
 > from sentence_processor import SentenceProcessor
 > phrase = "The tomato, which is one of the most popular salad ingredients, grows in many shapes and colors in greenhouses around the world."
